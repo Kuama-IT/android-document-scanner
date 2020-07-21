@@ -18,8 +18,6 @@ class Loader(context: Context) {
         override fun onManagerConnected(status: Int) {
             when (status) {
                 LoaderCallbackInterface.SUCCESS -> {
-                    // Load native library after(!) OpenCV initialization
-                    System.loadLibrary("native-lib")
                     onLoad?.invoke(OpenCvStatus.LOADED)
                 }
                 else -> {
