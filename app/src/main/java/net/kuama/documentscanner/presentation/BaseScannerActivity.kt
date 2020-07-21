@@ -3,6 +3,7 @@ package net.kuama.documentscanner.presentation
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.view.Window
 import android.view.WindowManager
 import android.widget.SeekBar
 import androidx.activity.viewModels
@@ -20,8 +21,15 @@ abstract class BaseScannerActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-
+        window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE
+                // Set the content to appear under the system bars so that the
+                // content doesn't resize when the system bars hide and show.
+                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                // Hide the nav bar and status bar
+                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_FULLSCREEN)
         setContentView(R.layout.activity_scanner)
         val viewModel: ScannerViewModel by viewModels()
         viewModel.isBusy.observe(this, Observer { isBusy ->
@@ -84,11 +92,11 @@ abstract class BaseScannerActivity : AppCompatActivity() {
         }
 
         closePreview.setOnClickListener {
-            previewWrap.visibility = View.GONE
-            viewModel.onClosePreview()
+            closePreview()
         }
 
         confirmDocument.setOnClickListener {
+            previewWrap.visibility = View.GONE
             onDocumentAccepted(viewModel.documentPath!!)
         }
 
@@ -111,6 +119,11 @@ abstract class BaseScannerActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         viewModel.onViewCreated(Loader(this), this, viewFinder)
+    }
+
+    public fun closePreview() {
+        previewWrap.visibility = View.GONE
+        viewModel.onClosePreview()
     }
 
     abstract fun onError(throwable: Throwable)

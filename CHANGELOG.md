@@ -1,5 +1,9 @@
 # Not Released
 
+# 0.1.4
+> 2020-07-21
+- Added fullscreen
+
 # 0.1.3
 > 2020-07-21
 - Removed unused dependencies
