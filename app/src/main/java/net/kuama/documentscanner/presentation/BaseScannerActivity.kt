@@ -92,6 +92,9 @@ abstract class BaseScannerActivity : AppCompatActivity() {
             onDocumentAccepted(viewModel.documentPath!!)
         }
 
+        closeScanner.setOnClickListener {
+            onClose()
+        }
         this.viewModel = viewModel
     }
 
@@ -112,4 +115,5 @@ abstract class BaseScannerActivity : AppCompatActivity() {
 
     abstract fun onError(throwable: Throwable)
     abstract fun onDocumentAccepted(path: String)
+    abstract fun onClose()
 }

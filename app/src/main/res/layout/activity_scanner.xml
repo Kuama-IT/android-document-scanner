@@ -63,6 +63,19 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/shutter" />
 
+    <ImageButton
+        android:id="@+id/closeScanner"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:background="@null"
+        android:contentDescription="@string/close_document_preview"
+        android:src="@drawable/ic_close_24"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/previewWrap"
         android:layout_width="match_parent"

@@ -38,7 +38,11 @@ class ScannerActivity : BaseScannerActivity() {
     }
 
     override fun onDocumentAccepted(path: String) {
-        TODO("Do something with the path to the file")
+        Toast.makeText(this, path, Toast.LENGTH_LONG).show()
+    }
+
+    override fun onClose() {
+        finish()
     }
 }
 

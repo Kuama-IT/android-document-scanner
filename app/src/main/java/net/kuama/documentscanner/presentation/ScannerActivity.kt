@@ -19,4 +19,8 @@ class ScannerActivity : BaseScannerActivity() {
     override fun onDocumentAccepted(path: String) {
         Toast.makeText(this, path, Toast.LENGTH_LONG).show()
     }
+
+    override fun onClose() {
+        finish()
+    }
 }
