@@ -1,13 +1,13 @@
 package net.kuama.documentscanner.presentation
 
+import android.graphics.Bitmap
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.view.Window
-import android.view.WindowManager
 import android.widget.SeekBar
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.drawToBitmap
 import androidx.lifecycle.Observer
 import kotlinx.android.synthetic.main.activity_scanner.*
 import net.kuama.documentscanner.R
@@ -97,7 +97,7 @@ abstract class BaseScannerActivity : AppCompatActivity() {
 
         confirmDocument.setOnClickListener {
             previewWrap.visibility = View.GONE
-            onDocumentAccepted(viewModel.documentPath!!)
+            onDocumentAccepted(documentPreview.drawToBitmap())
         }
 
         closeScanner.setOnClickListener {
@@ -127,6 +127,6 @@ abstract class BaseScannerActivity : AppCompatActivity() {
     }
 
     abstract fun onError(throwable: Throwable)
-    abstract fun onDocumentAccepted(path: String)
+    abstract fun onDocumentAccepted(bitmap: Bitmap)
     abstract fun onClose()
 }

@@ -2,6 +2,7 @@
 
 # 0.1.4
 > 2020-07-21
+- Return preview bitmap on user confirmation
 - Added fullscreen
 
 # 0.1.3

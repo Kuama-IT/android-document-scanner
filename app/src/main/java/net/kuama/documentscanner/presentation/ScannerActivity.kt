@@ -1,5 +1,6 @@
 package net.kuama.documentscanner.presentation
 
+import android.graphics.Bitmap
 import android.widget.Toast
 import net.kuama.documentscanner.R
 import net.kuama.documentscanner.exceptions.NullCorners
@@ -16,8 +17,7 @@ class ScannerActivity : BaseScannerActivity() {
         }
     }
 
-    override fun onDocumentAccepted(path: String) {
-        Toast.makeText(this, path, Toast.LENGTH_LONG).show()
+    override fun onDocumentAccepted(bitmap: Bitmap) {
     }
 
     override fun onClose() {
