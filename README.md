@@ -46,3 +46,5 @@ class ScannerActivity : BaseScannerActivity() {
 }
 
 ```
+
+### Preview
