@@ -48,3 +48,6 @@ class ScannerActivity : BaseScannerActivity() {
 ```
 
 ### Preview
+Detect document
+
+![detect](https://github.com/kuamanet/android-document-scanner/blob/master/images/detect.jpg | height=250)
