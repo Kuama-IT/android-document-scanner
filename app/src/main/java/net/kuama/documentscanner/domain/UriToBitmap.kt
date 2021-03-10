@@ -36,7 +36,7 @@ class UriToBitmap : UseCase<Bitmap, UriToBitmap.Params>() {
 
         val rotatedBitmap =
             Bitmap.createBitmap(image, 0, 0, image.width, image.height, matrix, true)
-        image.recycle()
+        
         Right(rotatedBitmap)
     } catch (throwable: Throwable) {
         Left(Failure(throwable))

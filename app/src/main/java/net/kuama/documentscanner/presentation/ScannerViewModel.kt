@@ -1,20 +1,28 @@
 package net.kuama.documentscanner.presentation
 
+import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Bitmap
+import android.content.Intent
+import android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
+import android.graphics.*
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.core.*
-import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.ImageProxy
+import androidx.camera.core.impl.utils.futures.FutureCallback
+import androidx.camera.core.impl.utils.futures.Futures.addCallback
+import androidx.camera.view.CameraController.IMAGE_ANALYSIS
+import androidx.camera.view.CameraController.IMAGE_CAPTURE
+import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.google.common.util.concurrent.ListenableFuture
 import net.kuama.documentscanner.data.Loader
 import net.kuama.documentscanner.data.OpenCvStatus
 import net.kuama.documentscanner.domain.*
-import net.kuama.documentscanner.exceptions.NullCorners
 import net.kuama.scanner.data.Corners
 import java.io.File
 import java.text.SimpleDateFormat
@@ -28,6 +36,8 @@ enum class FlashStatus {
 }
 
 class ScannerViewModel : ViewModel() {
+    private lateinit var controller: LifecycleCameraController
+
     /**
      * Observable data
      */
@@ -35,18 +45,14 @@ class ScannerViewModel : ViewModel() {
     val openCv = MutableLiveData<OpenCvStatus>()
     val corners = MutableLiveData<Corners?>()
     val errors = MutableLiveData<Throwable>()
-
     val flashStatus = MutableLiveData<FlashStatus>()
     val documentPreview = MutableLiveData<Bitmap>()
-
     private var didLoadOpenCv = false
 
     /**
      * Use cases
      */
-    private val findPaperSheetUseCase: FindPaperSheet = FindPaperSheet()
-    private val perspectiveTransform: PerspectiveTransform = PerspectiveTransform()
-    private val uriToBitmap: UriToBitmap = UriToBitmap()
+    private val findPaperSheetUseCase: FindPaperSheetContours = FindPaperSheetContours()
 
     /**
      * See [THRESHOLD_BASE]
@@ -62,7 +68,6 @@ class ScannerViewModel : ViewModel() {
         viewFinder: PreviewView
     ) {
         isBusy.value = true
-
         setupCamera(scannerActivity, viewFinder) {
             if (!didLoadOpenCv) {
                 loader.load {
@@ -75,11 +80,9 @@ class ScannerViewModel : ViewModel() {
             }
         }
     }
-
     fun onThresholdChange(threshold: Int) {
         this.threshold = threshold.toDouble()
     }
-
     fun onFlashToggle() {
         flashStatus.value?.let { currentValue ->
             flashStatus.value = when (currentValue) {
@@ -90,70 +93,39 @@ class ScannerViewModel : ViewModel() {
             // default flash status is off
             flashStatus.value = FlashStatus.ON
         }()
-
         when (flashStatus.value) {
-            FlashStatus.ON -> camera?.cameraControl?.enableTorch(true)
-            FlashStatus.OFF -> camera?.cameraControl?.enableTorch(false)
-            null -> camera?.cameraControl?.enableTorch(false)
+            FlashStatus.ON -> controller.enableTorch(true)
+            FlashStatus.OFF -> controller.enableTorch(false)
+            null -> controller.enableTorch(false)
         }
     }
-
     fun onTakePicture(outputDirectory: File, context: Context) {
         isBusy.value = true
-
         val photoFile = File(
             outputDirectory,
             SimpleDateFormat(
                 FILENAME_FORMAT, Locale.US
             ).format(System.currentTimeMillis()) + ".jpg"
         )
-
         // Create output options object which contains file + metadata
         val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
-
-        imageCapture.takePicture(
+        controller.takePicture(
             outputOptions,
             ContextCompat.getMainExecutor(context),
             object : ImageCapture.OnImageSavedCallback {
                 override fun onError(exc: ImageCaptureException) {
                     errors.value = exc
                 }
-
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                     lastUri = Uri.fromFile(photoFile)
 
-                    uriToBitmap(
-                        UriToBitmap.Params(
-                            uri = lastUri!!,
-                            contentResolver = context.contentResolver
-                        )
-                    ) {
-                        it.fold(::handleFailure) { preview ->
-                            analyze(preview, returnOriginalMat = true) { pair ->
-                                pair.second?.let {
-                                    perspectiveTransform(
-                                        PerspectiveTransform.Params(
-                                            bitmap = pair.first,
-                                            corners = pair.second!!
-                                        )
-                                    ) { result ->
-                                        isBusy.value = false
-                                        result.fold(::handleFailure) { documentPreview ->
-                                            this@ScannerViewModel.documentPreview.value =
-                                                documentPreview
-                                        }
-                                    }
-                                } ?: {
-                                    errors.value = NullCorners()
-                                    isBusy.value = false
-                                }()
-                            }
-                        }
-                    }
+                    val intent = Intent(context, CropperActivity::class.java)
+                    intent.putExtra("lastUri", lastUri.toString())
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or FLAG_ACTIVITY_CLEAR_TASK
+                    context.startActivity(intent)
                 }
             })
     }
-
     fun onClosePreview() {
         lastUri?.let {
             val file = File(it.path!!)
@@ -162,92 +134,62 @@ class ScannerViewModel : ViewModel() {
             }
         }
     }
-
     val documentPath: String?
         get() = lastUri?.path
 
-// CameraX setup
-
+    // CameraX setup
     private var lastUri: Uri? = null
 
-    // Preview
-    private val preview: Preview by lazy {
-        Preview.Builder().build()
-    }
-
-    // Select back camera
-    private val cameraSelector: CameraSelector =
-        CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_BACK).build()
-
-    private val imageAnalysis: ImageAnalysis by lazy {
-        ImageAnalysis.Builder().apply {
-            setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-        }.build()
-    }
-
-    private val imageCapture: ImageCapture by lazy {
-        ImageCapture.Builder()
-            .build()
-    }
-
-    private var cameraProvider: ProcessCameraProvider? = null
-    private var camera: Camera? = null
-    private var executor: Executor? = null
-
+    @SuppressLint("RestrictedApi", "UnsafeExperimentalUsageError")
     private fun setupCamera(
         lifecycleOwner: AppCompatActivity,
         viewFinder: PreviewView,
         then: () -> Unit
     ) {
         isBusy.value = true
-        val cameraProviderFuture: ListenableFuture<ProcessCameraProvider> =
-            ProcessCameraProvider.getInstance(lifecycleOwner)
-        executor = ContextCompat.getMainExecutor(lifecycleOwner)
 
-        cameraProviderFuture.addListener(Runnable {
-            // Used to bind the lifecycle of cameras to the lifecycle owner
-            cameraProvider = cameraProviderFuture.get()
-            try {
-                // Unbind use cases before possible rebinding
-                cameraProvider!!.unbindAll()
+        val executor: Executor = ContextCompat.getMainExecutor(lifecycleOwner)
+        controller = LifecycleCameraController(lifecycleOwner)
+        controller.setImageAnalysisAnalyzer(executor, ImageAnalysis.Analyzer { proxy: ImageProxy ->
+            // could not find a performing way to transform
+            // the proxy to a bitmap, so we are reading
+            // the bitmap directly from the preview view
 
-                imageAnalysis.setAnalyzer(executor!!, ImageAnalysis.Analyzer { proxy ->
-                    // could not find a performing way to transform
-                    // the proxy to a bitmap, so we are reading
-                    // the bitmap directly from the preview view
-                    viewFinder.bitmap?.let {
-                        analyze(it, onSuccess = {
-                            proxy.close()
-                        })
-                    } ?: {
-                        corners.value = null
-                        proxy.close()
-                    }()
+            viewFinder.bitmap?.let {
+                analyze(it, onSuccess = {
+                    proxy.close()
                 })
+            } ?: {
+                corners.value = null
+                proxy.close()
+            }()
+        })
+        controller.imageAnalysisBackpressureStrategy = ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST
+        controller.setEnabledUseCases(IMAGE_CAPTURE or IMAGE_ANALYSIS)
 
-                // Bind use cases to camera
-                camera = cameraProvider!!.bindToLifecycle(
-                    lifecycleOwner,
-                    cameraSelector,
-                    preview,
-                    imageAnalysis,
-                    imageCapture
-                )
-                preview.setSurfaceProvider(viewFinder.createSurfaceProvider())
-            } catch (exc: Exception) {
-                errors.value = exc
-            }
-        }, executor!!)
+        controller.bindToLifecycle(lifecycleOwner)
+        viewFinder.controller = controller
+        addCallback(
+            controller.initializationFuture,
+            object : FutureCallback<Void> {
+                override fun onSuccess(result: Void?) {
+                    then()
+                }
+                override fun onFailure(t: Throwable?) {
+                    errors.value = t
+                }
+            },
+            executor
+        )
         then.invoke()
     }
-
     private fun analyze(
         bitmap: Bitmap,
         onSuccess: (() -> Unit)? = null,
         returnOriginalMat: Boolean = false,
         callback: ((Pair<Bitmap, Corners?>) -> Unit)? = null
     ) {
-        findPaperSheetUseCase(FindPaperSheet.Params(bitmap, threshold, returnOriginalMat)) {
+        findPaperSheetUseCase(FindPaperSheetContours.Params(bitmap, Matrix(), threshold, returnOriginalMat)) {
             it.fold(::handleFailure) { pair: Pair<Bitmap, Corners?> ->
                 callback?.invoke(pair) ?: {
                     corners.value = pair.second
@@ -256,7 +198,6 @@ class ScannerViewModel : ViewModel() {
             }
         }
     }
-
     private fun handleFailure(failure: Failure) {
         errors.value = failure.origin
         isBusy.value = false

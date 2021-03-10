@@ -1,10 +1,12 @@
 package net.kuama.documentscanner.presentation
 
+import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.widget.Toast
 import net.kuama.documentscanner.R
 import net.kuama.documentscanner.exceptions.NullCorners
 
+@SuppressLint("UnsafeExperimentalUsageError")
 class ScannerActivity : BaseScannerActivity() {
     override fun onError(throwable: Throwable) {
         when (throwable) {
