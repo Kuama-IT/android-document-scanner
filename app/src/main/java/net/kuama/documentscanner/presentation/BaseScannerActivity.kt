@@ -21,7 +21,6 @@ import java.io.File
 abstract class BaseScannerActivity : AppCompatActivity() {
     private lateinit var viewModel: ScannerViewModel
     private val perspectiveTransform: PerspectiveTransform = PerspectiveTransform()
-    private var thresholdValue = 0
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,21 +70,6 @@ abstract class BaseScannerActivity : AppCompatActivity() {
                     else -> R.drawable.ic_flash_off
                 }
             )
-        })
-
-        threshold.max = 15
-        threshold.progress = thresholdValue
-
-        threshold.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                viewModel.onThresholdChange(progress)
-            }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {
-            }
-
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {
-            }
         })
 
         flashToggle.setOnClickListener {

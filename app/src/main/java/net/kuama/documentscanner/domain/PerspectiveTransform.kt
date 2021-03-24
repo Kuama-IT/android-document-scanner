@@ -34,10 +34,10 @@ class PerspectiveTransform : UseCase<Bitmap, PerspectiveTransform.Params>() {
 
         val orderedCorners = sortPoints(
             arrayOf(
-                params.corners.corners[0]!!,
-                params.corners.corners[1]!!,
-                params.corners.corners[2]!!,
-                params.corners.corners[3]!!
+            params.corners.corners[0] ?: error("Invalid corners"),
+            params.corners.corners[1] ?: error("Invalid corners"),
+            params.corners.corners[2] ?: error("Invalid corners"),
+            params.corners.corners[3] ?: error("Invalid corners")
             )
         )
 

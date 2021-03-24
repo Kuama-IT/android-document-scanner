@@ -56,7 +56,7 @@ class CropperActivity: AppCompatActivity() {
             )
         ) {
             it.fold(::handleFailure) { preview ->
-                analyze(preview, Matrix(), returnOriginalMat = true) { pair ->
+                analyze(preview, returnOriginalMat = true) { pair ->
                     pair.second?.let {
                         cropPreview.setImageBitmap(preview)
                         cropWrap.visibility = View.VISIBLE
@@ -122,28 +122,12 @@ class CropperActivity: AppCompatActivity() {
         })
     }
 
-    private inline fun View.waitForLayout(crossinline yourAction: () -> Unit) {
-        val vto = viewTreeObserver
-        vto.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
-            override fun onGlobalLayout() {
-                when {
-                    vto.isAlive -> {
-                        vto.removeOnGlobalLayoutListener(this)
-                        yourAction()
-                    }
-                    else -> viewTreeObserver.removeOnGlobalLayoutListener(this)
-                }
-            }
-        })
-    }
-
     private fun handleFailure(failure: Failure) {
 
     }
 
     private fun analyze(
         bitmap: Bitmap,
-        matrix: Matrix,
         onSuccess: (() -> Unit)? = null,
         returnOriginalMat: Boolean = false,
         callback: ((Pair<Bitmap, Corners?>) -> Unit)? = null
@@ -151,8 +135,6 @@ class CropperActivity: AppCompatActivity() {
         findPaperSheetUseCase(
             FindPaperSheetContours.Params(
                 bitmap,
-                matrix,
-                0.0,
                 returnOriginalMat
             )
         ) {
@@ -175,5 +157,20 @@ class CropperActivity: AppCompatActivity() {
         return b
     }
 
+}
+
+private inline fun View.waitForLayout(crossinline yourAction: () -> Unit) {
+    val vto = viewTreeObserver
+    vto.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+        override fun onGlobalLayout() {
+            when {
+                vto.isAlive -> {
+                    vto.removeOnGlobalLayoutListener(this)
+                    yourAction()
+                }
+                else -> viewTreeObserver.removeOnGlobalLayoutListener(this)
+            }
+        }
+    })
 }
 

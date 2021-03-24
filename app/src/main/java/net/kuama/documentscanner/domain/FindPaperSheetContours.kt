@@ -20,8 +20,6 @@ class FindPaperSheetContours : UseCase<Pair<Bitmap, Corners?>, FindPaperSheetCon
 {
     class Params(
         val bitmap: Bitmap,
-        val matrix: Matrix,
-        val sensitivity: Double,
         val returnOriginalMat: Boolean = false
     )
 
@@ -31,8 +29,6 @@ class FindPaperSheetContours : UseCase<Pair<Bitmap, Corners?>, FindPaperSheetCon
             val modified = Mat()
 
             Utils.bitmapToMat(params.bitmap, original)
-
-            //delay(200)
 
             // Convert image from RGBA to GrayScale
             Imgproc.cvtColor(original, modified, Imgproc.COLOR_RGBA2GRAY)
@@ -47,15 +43,15 @@ class FindPaperSheetContours : UseCase<Pair<Bitmap, Corners?>, FindPaperSheetCon
             Imgproc.dilate(
                 modified, modified, Imgproc.getStructuringElement(
                     Imgproc.MORPH_RECT, Size(
-                        8.0 + params.sensitivity,
-                        8.0 + params.sensitivity
+                        8.0,
+                        8.0
                     )
                 )
             )
             Imgproc.erode(
                 modified, modified, Imgproc.getStructuringElement(
                     Imgproc.MORPH_RECT,
-                    Size(3.0 + params.sensitivity, 3.0 + params.sensitivity)
+                    Size(3.0, 3.0)
                 )
             )
 

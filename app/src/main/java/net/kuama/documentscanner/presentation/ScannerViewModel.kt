@@ -126,6 +126,7 @@ class ScannerViewModel : ViewModel() {
                 }
             })
     }
+
     fun onClosePreview() {
         lastUri?.let {
             val file = File(it.path!!)
@@ -189,7 +190,7 @@ class ScannerViewModel : ViewModel() {
         returnOriginalMat: Boolean = false,
         callback: ((Pair<Bitmap, Corners?>) -> Unit)? = null
     ) {
-        findPaperSheetUseCase(FindPaperSheetContours.Params(bitmap, Matrix(), threshold, returnOriginalMat)) {
+        findPaperSheetUseCase(FindPaperSheetContours.Params(bitmap, returnOriginalMat)) {
             it.fold(::handleFailure) { pair: Pair<Bitmap, Corners?> ->
                 callback?.invoke(pair) ?: {
                     corners.value = pair.second
