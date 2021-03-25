@@ -55,11 +55,6 @@ class ScannerViewModel : ViewModel() {
     private val findPaperSheetUseCase: FindPaperSheetContours = FindPaperSheetContours()
 
     /**
-     * See [THRESHOLD_BASE]
-     */
-    private var threshold = THRESHOLD_BASE
-
-    /**
      * Tries to load OpenCv native libraries
      */
     fun onViewCreated(
@@ -80,19 +75,19 @@ class ScannerViewModel : ViewModel() {
             }
         }
     }
-    fun onThresholdChange(threshold: Int) {
-        this.threshold = threshold.toDouble()
-    }
+
     fun onFlashToggle() {
         flashStatus.value?.let { currentValue ->
             flashStatus.value = when (currentValue) {
                 FlashStatus.ON -> FlashStatus.OFF
                 FlashStatus.OFF -> FlashStatus.ON
             }
-        } ?: {
+        } ?: // default flash status is off
+        run {
+            // default flash status is off
             // default flash status is off
             flashStatus.value = FlashStatus.ON
-        }()
+        }
         when (flashStatus.value) {
             FlashStatus.ON -> controller.enableTorch(true)
             FlashStatus.OFF -> controller.enableTorch(false)
@@ -127,17 +122,6 @@ class ScannerViewModel : ViewModel() {
             })
     }
 
-    fun onClosePreview() {
-        lastUri?.let {
-            val file = File(it.path!!)
-            if (file.exists()) {
-                file.delete()
-            }
-        }
-    }
-    val documentPath: String?
-        get() = lastUri?.path
-
     // CameraX setup
     private var lastUri: Uri? = null
 
@@ -160,10 +144,10 @@ class ScannerViewModel : ViewModel() {
                 analyze(it, onSuccess = {
                     proxy.close()
                 })
-            } ?: {
+            } ?: run {
                 corners.value = null
                 proxy.close()
-            }()
+            }
         })
         controller.imageAnalysisBackpressureStrategy = ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST
         controller.setEnabledUseCases(IMAGE_CAPTURE or IMAGE_ANALYSIS)
@@ -192,9 +176,9 @@ class ScannerViewModel : ViewModel() {
     ) {
         findPaperSheetUseCase(FindPaperSheetContours.Params(bitmap, returnOriginalMat)) {
             it.fold(::handleFailure) { pair: Pair<Bitmap, Corners?> ->
-                callback?.invoke(pair) ?: {
+                callback?.invoke(pair) ?: run {
                     corners.value = pair.second
-                }()
+                }
                 onSuccess?.invoke()
             }
         }

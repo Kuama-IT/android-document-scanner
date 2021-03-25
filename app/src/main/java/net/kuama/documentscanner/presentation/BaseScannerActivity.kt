@@ -16,6 +16,7 @@ import net.kuama.documentscanner.data.Loader
 import net.kuama.documentscanner.domain.Failure
 import net.kuama.documentscanner.domain.PerspectiveTransform
 import java.io.File
+import kotlin.system.exitProcess
 
 @androidx.camera.core.ExperimentalGetImage
 abstract class BaseScannerActivity : AppCompatActivity() {
@@ -57,11 +58,6 @@ abstract class BaseScannerActivity : AppCompatActivity() {
             }
         })
 
-        viewModel.documentPreview.observe(this, Observer {
-            documentPreview.setImageBitmap(it)
-            previewWrap.visibility = View.VISIBLE
-        })
-
         viewModel.flashStatus.observe(this, Observer { status ->
             flashToggle.setImageResource(
                 when (status) {
@@ -80,17 +76,8 @@ abstract class BaseScannerActivity : AppCompatActivity() {
             viewModel.onTakePicture(getOutputDirectory(), this)
         }
 
-        closePreview.setOnClickListener {
-            closePreview()
-        }
-
-        confirmDocument.setOnClickListener {
-            previewWrap.visibility = View.GONE
-            onDocumentAccepted(documentPreview.drawToBitmap())
-        }
-
         closeScanner.setOnClickListener {
-            onClose()
+            closePreview()
         }
         this.viewModel = viewModel
     }
@@ -116,10 +103,7 @@ abstract class BaseScannerActivity : AppCompatActivity() {
     }
 
     fun closePreview() {
-        super.onResume()
-        previewWrap.visibility = View.GONE
-        viewModel.onViewCreated(Loader(this), this, viewFinder)
-
+        finish()
     }
 
     abstract fun onError(throwable: Throwable)

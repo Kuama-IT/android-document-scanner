@@ -5,9 +5,11 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Matrix
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.view.ViewTreeObserver
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toUri
 import androidx.lifecycle.MutableLiveData
@@ -21,13 +23,8 @@ import net.kuama.documentscanner.domain.UriToBitmap
 import net.kuama.scanner.data.Corners
 
 class CropperActivity: AppCompatActivity() {
-    private val perspectiveTransform: PerspectiveTransform = PerspectiveTransform()
-    private val findPaperSheetUseCase: FindPaperSheetContours = FindPaperSheetContours()
-    private val uriToBitmap: UriToBitmap = UriToBitmap()
-
-    private val corners = MutableLiveData<Corners?>()
-    private val bitmap = MutableLiveData<Bitmap>()
-    private val finalDocument = MutableLiveData<Bitmap>()
+    private lateinit var cropModel: CropperModel
+    private lateinit var bitmapUri: Uri
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,31 +41,30 @@ class CropperActivity: AppCompatActivity() {
         setContentView(R.layout.activity_cropper)
 
         val extras = intent.extras
-        var value = ""
         if (extras != null) {
-            value = intent.extras?.getString("lastUri")!!
+            bitmapUri = intent.extras?.getString("lastUri")?.toUri() ?: error("invalid uri")
         }
 
-        uriToBitmap(
-            UriToBitmap.Params(
-                uri = value.toUri(),
-                contentResolver = contentResolver
-            )
-        ) {
-            it.fold(::handleFailure) { preview ->
-                analyze(preview, returnOriginalMat = true) { pair ->
-                    pair.second?.let {
-                        cropPreview.setImageBitmap(preview)
-                        cropWrap.visibility = View.VISIBLE
-                    }
+        val cropModel: CropperModel by viewModels()
 
-                    cropWrap.waitForLayout {
-                        corners.value = pair.second!!
-                        bitmap.value = pair.first
-                    }
-                }
+        // Picture taken from User
+        cropModel.original.observe(this, Observer {
+            cropPreview.setImageBitmap(cropModel.original.value)
+            cropWrap.visibility = View.VISIBLE
+
+            // Wait for bitmap to be loaded on view, then draw corners
+            cropWrap.waitForLayout {
+                cropHud.onCorners(corners = cropModel.corners.value ?: error("invalic Corners"), height = cropPreview.measuredHeight, width =  cropPreview.measuredWidth)
             }
-        }
+        })
+
+        cropModel.finalDocument.observe(this, Observer {
+            finalResult.setImageBitmap(cropModel.finalDocument.value)
+        })
+
+        cropModel.bitmapToCrop.observe(this, Observer {
+            cropResultPreview.setImageBitmap(cropModel.bitmapToCrop.value)
+        })
 
         acceptFinalResult.setOnClickListener {
             finish()
@@ -76,73 +72,39 @@ class CropperActivity: AppCompatActivity() {
 
         closeResultPreview.setOnClickListener {
             val intent = Intent(this, ScannerActivity::class.java)
+            finish()
             this.startActivity(intent)
         }
 
         closeCropPreview.setOnClickListener {
             val intent = Intent(this, ScannerActivity::class.java)
+            finish()
             this.startActivity(intent)
+        }
+
+        confirmCropPreview.setOnClickListener {
+            cropWrap.visibility = View.GONE
+            cropHud.visibility = View.GONE
+            loadBitmapFromView(cropPreview)?.let { bitmapToCrop -> cropModel.onCornersAccepted(bitmapToCrop) }
+            cropResultWrap.visibility = View.VISIBLE
         }
 
         confirmCropResult.setOnClickListener {
             cropResultWrap.visibility = View.GONE
-            finalResult.setImageBitmap(finalDocument.value)
+            cropModel.onAcceptResult()
             finalResultWrap.visibility = View.VISIBLE
-        }
-
-        confirmCropPreview.setOnClickListener {
-            val sel = loadBitmapFromView(cropPreview)
-            perspectiveTransform(
-                PerspectiveTransform.Params(
-                    bitmap = sel!!,
-                    corners = corners.value!!
-                )
-            ) { result ->
-                result.fold(::handleFailure) { bitmap ->
-                    cropWrap.visibility = View.GONE
-                    cropHud.visibility = View.INVISIBLE
-
-                    finalDocument.value = bitmap
-
-                    cropResultPreview.setImageBitmap(bitmap)
-                    cropResultWrap.visibility = View.VISIBLE
-
-                }
-            }
         }
 
         cropPreview.setOnTouchListener { _, motionEvent ->
             cropHud.onTouch(motionEvent)
         }
 
-        corners.observe(this, Observer {
-            it?.let { corners ->
-                cropHud.onCorners(corners, cropWrap.measuredWidth, cropPreview.measuredHeight)
-            }
-        })
+        this.cropModel = cropModel
     }
 
-    private fun handleFailure(failure: Failure) {
-
-    }
-
-    private fun analyze(
-        bitmap: Bitmap,
-        onSuccess: (() -> Unit)? = null,
-        returnOriginalMat: Boolean = false,
-        callback: ((Pair<Bitmap, Corners?>) -> Unit)? = null
-    ) {
-        findPaperSheetUseCase(
-            FindPaperSheetContours.Params(
-                bitmap,
-                returnOriginalMat
-            )
-        ) {
-            it.fold(::handleFailure) { pair: Pair<Bitmap, Corners?> ->
-                callback?.invoke(pair) ?: run { }
-                onSuccess?.invoke()
-            }
-        }
+    override fun onResume() {
+        super.onResume()
+        cropModel.onViewCreated(bitmapUri, contentResolver)
     }
 
     private fun loadBitmapFromView(v: View): Bitmap? {
