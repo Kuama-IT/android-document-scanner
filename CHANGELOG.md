@@ -1,5 +1,12 @@
 # Not Released
 
+# 0.1.5
+> 2021-3-25
+- Moved from CameraX to LifecycleCameraController
+- Enhanced image preprocessing before contours extraction
+- Added new activity that let the user move found corners before crop
+- Fixed inconsistencies across different devices
+
 # 0.1.4
 > 2020-07-21
 - Return preview bitmap on user confirmation
