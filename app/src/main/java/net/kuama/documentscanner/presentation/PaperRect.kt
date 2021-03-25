@@ -123,7 +123,7 @@ class PaperRectangle : View {
         canvas?.drawPath(path, fillPaint)
         canvas?.drawPath(path, rectPaint)
 
-        if(cropMode) {
+        if (cropMode) {
             canvas?.drawCircle(tl.x.toFloat(), tl.y.toFloat(), 40F, extCirclePaint)
             canvas?.drawCircle(tr.x.toFloat(), tr.y.toFloat(), 40F, extCirclePaint)
             canvas?.drawCircle(bl.x.toFloat(), bl.y.toFloat(), 40F, extCirclePaint)
@@ -134,7 +134,6 @@ class PaperRectangle : View {
             canvas?.drawCircle(bl.x.toFloat(), bl.y.toFloat(), 35F, intCirclePaint)
             canvas?.drawCircle(br.x.toFloat(), br.y.toFloat(), 35F, intCirclePaint)
         }
-
     }
 
     fun onTouch(event: MotionEvent?): Boolean {

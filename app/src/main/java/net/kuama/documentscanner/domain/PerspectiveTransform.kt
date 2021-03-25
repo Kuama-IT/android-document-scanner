@@ -1,6 +1,5 @@
 package net.kuama.documentscanner.domain
 
-import android.content.res.Resources
 import android.graphics.Bitmap
 import net.kuama.documentscanner.support.Either
 import net.kuama.documentscanner.support.Left

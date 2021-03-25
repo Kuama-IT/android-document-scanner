@@ -5,10 +5,8 @@ import android.graphics.Bitmap
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.SeekBar
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.drawToBitmap
 import androidx.lifecycle.Observer
 import kotlinx.android.synthetic.main.activity_scanner.*
 import net.kuama.documentscanner.R
@@ -16,7 +14,6 @@ import net.kuama.documentscanner.data.Loader
 import net.kuama.documentscanner.domain.Failure
 import net.kuama.documentscanner.domain.PerspectiveTransform
 import java.io.File
-import kotlin.system.exitProcess
 
 @androidx.camera.core.ExperimentalGetImage
 abstract class BaseScannerActivity : AppCompatActivity() {
