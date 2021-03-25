@@ -1,14 +1,18 @@
 package net.kuama.documentscanner.domain
 
+import android.content.res.Resources
 import android.graphics.Bitmap
-import net.kuama.scanner.data.Corners
 import net.kuama.documentscanner.support.Either
 import net.kuama.documentscanner.support.Left
 import net.kuama.documentscanner.support.Right
+import net.kuama.scanner.data.Corners
 import org.opencv.android.Utils
 import org.opencv.core.CvType
 import org.opencv.core.Mat
+import org.opencv.core.Point
 import org.opencv.imgproc.Imgproc
+import java.util.*
+import kotlin.Comparator
 import kotlin.math.max
 import kotlin.math.pow
 import kotlin.math.sqrt
@@ -23,12 +27,25 @@ class PerspectiveTransform : UseCase<Bitmap, PerspectiveTransform.Params>() {
 
     override suspend fun run(params: Params): Either<Failure, Bitmap> = try {
         val src = Mat()
-        Utils.bitmapToMat(params.bitmap, src)
 
-        val tl = params.corners.corners[0] ?: error("Invalid corners")
-        val tr = params.corners.corners[1] ?: error("Invalid corners")
-        val br = params.corners.corners[2] ?: error("Invalid corners")
-        val bl = params.corners.corners[3] ?: error("Invalid corners")
+        Utils.bitmapToMat(
+            params.bitmap, src
+        )
+
+        val orderedCorners = sortPoints(
+            arrayOf(
+            params.corners.corners[0] ?: error("Invalid corners"),
+            params.corners.corners[1] ?: error("Invalid corners"),
+            params.corners.corners[2] ?: error("Invalid corners"),
+            params.corners.corners[3] ?: error("Invalid corners")
+            )
+        )
+
+        val tl = orderedCorners[0]
+        val tr = orderedCorners[1]
+        val br = orderedCorners[2]
+        val bl = orderedCorners[3]
+
         val widthA = sqrt(
             (br.x - bl.x).pow(2.0) + (br.y - bl.y).pow(2.0)
         )
@@ -62,4 +79,31 @@ class PerspectiveTransform : UseCase<Bitmap, PerspectiveTransform.Params>() {
     } catch (throwable: Throwable) {
         Left(Failure(throwable))
     }
+}
+
+private fun sortPoints(src: Array<Point>): Array<Point> {
+    val srcPoints = src.toList()
+    val result = arrayOf<Point?>(null, null, null, null)
+    val sumComparator: Comparator<Point> =
+        Comparator { lhs, rhs ->
+            java.lang.Double.valueOf(lhs.y + lhs.x).compareTo(rhs.y + rhs.x)
+        }
+    val diffComparator: Comparator<Point> =
+        Comparator { lhs, rhs ->
+            java.lang.Double.valueOf(lhs.y - lhs.x).compareTo(rhs.y - rhs.x)
+        }
+
+    // top-left corner = minimal sum
+    result[0] = Collections.min(srcPoints, sumComparator)
+
+    // bottom-right corner = maximal sum
+    result[2] = Collections.max(srcPoints, sumComparator)
+
+    // top-right corner = minimal difference
+    result[1] = Collections.min(srcPoints, diffComparator)
+
+    // bottom-left corner = maximal difference
+    result[3] = Collections.max(srcPoints, diffComparator)
+
+    return result.filterNotNull().toTypedArray()
 }

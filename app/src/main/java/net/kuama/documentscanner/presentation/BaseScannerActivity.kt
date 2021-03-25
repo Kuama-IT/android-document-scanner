@@ -1,5 +1,6 @@
 package net.kuama.documentscanner.presentation
 
+import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.util.Log
@@ -12,13 +13,17 @@ import androidx.lifecycle.Observer
 import kotlinx.android.synthetic.main.activity_scanner.*
 import net.kuama.documentscanner.R
 import net.kuama.documentscanner.data.Loader
+import net.kuama.documentscanner.domain.Failure
+import net.kuama.documentscanner.domain.PerspectiveTransform
 import java.io.File
+import kotlin.system.exitProcess
 
+@androidx.camera.core.ExperimentalGetImage
 abstract class BaseScannerActivity : AppCompatActivity() {
     private lateinit var viewModel: ScannerViewModel
+    private val perspectiveTransform: PerspectiveTransform = PerspectiveTransform()
 
-    private var thresholdValue = 48
-
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE
@@ -48,14 +53,9 @@ abstract class BaseScannerActivity : AppCompatActivity() {
         viewModel.corners.observe(this, Observer {
             it?.let { corners ->
                 hud.onCornersDetected(corners)
-            } ?: {
+            } ?: run {
                 hud.onCornersNotDetected()
-            }()
-        })
-
-        viewModel.documentPreview.observe(this, Observer {
-            documentPreview.setImageBitmap(it)
-            previewWrap.visibility = View.VISIBLE
+            }
         })
 
         viewModel.flashStatus.observe(this, Observer { status ->
@@ -68,21 +68,6 @@ abstract class BaseScannerActivity : AppCompatActivity() {
             )
         })
 
-        threshold.max = 255
-        threshold.progress = thresholdValue
-
-        threshold.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                viewModel.onThresholdChange(progress)
-            }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {
-            }
-
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {
-            }
-        })
-
         flashToggle.setOnClickListener {
             viewModel.onFlashToggle()
         }
@@ -91,17 +76,8 @@ abstract class BaseScannerActivity : AppCompatActivity() {
             viewModel.onTakePicture(getOutputDirectory(), this)
         }
 
-        closePreview.setOnClickListener {
-            closePreview()
-        }
-
-        confirmDocument.setOnClickListener {
-            previewWrap.visibility = View.GONE
-            onDocumentAccepted(documentPreview.drawToBitmap())
-        }
-
         closeScanner.setOnClickListener {
-            onClose()
+            closePreview()
         }
         this.viewModel = viewModel
     }
@@ -116,14 +92,18 @@ abstract class BaseScannerActivity : AppCompatActivity() {
             mediaDir else appContext.filesDir
     }
 
+    private fun handleFailure(failure: Failure) {
+        viewModel.errors.value = failure.origin
+        viewModel.isBusy.value = false
+    }
+
     override fun onResume() {
         super.onResume()
         viewModel.onViewCreated(Loader(this), this, viewFinder)
     }
 
-    public fun closePreview() {
-        previewWrap.visibility = View.GONE
-        viewModel.onClosePreview()
+    fun closePreview() {
+        finish()
     }
 
     abstract fun onError(throwable: Throwable)

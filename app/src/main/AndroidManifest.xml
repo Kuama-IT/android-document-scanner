@@ -19,6 +19,9 @@
        <activity
             android:name=".presentation.ScannerActivity"
             android:screenOrientation="portrait" />
+        <activity
+            android:name=".presentation.CropperActivity"
+            android:screenOrientation="portrait" />
     </application>
 
 </manifest>

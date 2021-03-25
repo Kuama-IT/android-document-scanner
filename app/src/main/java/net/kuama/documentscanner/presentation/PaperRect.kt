@@ -3,6 +3,7 @@ package net.kuama.documentscanner.presentation
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import net.kuama.scanner.data.Corners
@@ -15,7 +16,10 @@ class PaperRectangle : View {
     constructor(context: Context, attributes: AttributeSet, defTheme: Int) : super(context, attributes, defTheme)
 
     private val rectPaint = Paint()
-    private val circlePaint = Paint()
+    private val extCirclePaint = Paint()
+    private val intCirclePaint = Paint()
+    private val intCirclePaintR = Paint()
+    private val extCirclePaintR = Paint()
     private val fillPaint = Paint()
     private var ratioX: Double = 1.0
     private var ratioY: Double = 1.0
@@ -49,11 +53,44 @@ class PaperRectangle : View {
         fillPaint.strokeCap = Paint.Cap.ROUND // set the paint cap to round too
         fillPaint.pathEffect = CornerPathEffect(10f)
 
-        circlePaint.color = Color.LTGRAY
-        circlePaint.isDither = true
-        circlePaint.isAntiAlias = true
-        circlePaint.strokeWidth = 4F
-        circlePaint.style = Paint.Style.STROKE
+        extCirclePaint.color = Color.parseColor("#3454D1")
+        extCirclePaint.isDither = true
+        extCirclePaint.isAntiAlias = true
+        extCirclePaint.strokeWidth = 8F
+        extCirclePaint.style = Paint.Style.STROKE
+
+        intCirclePaint.color = Color.DKGRAY
+        intCirclePaint.isDither = true
+        intCirclePaint.isAntiAlias = true
+        intCirclePaint.strokeWidth = 10F
+        intCirclePaint.style = Paint.Style.FILL
+
+        intCirclePaintR.color = Color.RED
+        intCirclePaintR.isDither = true
+        intCirclePaintR.isAntiAlias = true
+        intCirclePaintR.strokeWidth = 10F
+        intCirclePaintR.style = Paint.Style.FILL
+
+        extCirclePaintR.color = Color.RED
+        extCirclePaintR.isDither = true
+        extCirclePaintR.isAntiAlias = true
+        extCirclePaintR.strokeWidth = 8F
+        extCirclePaintR.style = Paint.Style.STROKE
+    }
+
+    fun onCorners(corners: Corners, width: Int, height: Int) {
+        cropMode = true
+        ratioX = corners.size.width.div(width)
+        ratioY = corners.size.height.div(height)
+        tl = corners.corners[0] ?: Point()
+        tr = corners.corners[1] ?: Point()
+        br = corners.corners[2] ?: Point()
+        bl = corners.corners[3] ?: Point()
+        printLog(corners)
+        resize()
+        path.reset()
+        path.close()
+        invalidate()
     }
 
     fun onCornersDetected(corners: Corners) {
@@ -63,14 +100,16 @@ class PaperRectangle : View {
         tr = corners.corners[1] ?: Point()
         br = corners.corners[2] ?: Point()
         bl = corners.corners[3] ?: Point()
+        printLog(corners)
         resize()
         path.reset()
+
         path.moveTo(tl.x.toFloat(), tl.y.toFloat())
         path.lineTo(tr.x.toFloat(), tr.y.toFloat())
         path.lineTo(br.x.toFloat(), br.y.toFloat())
         path.lineTo(bl.x.toFloat(), bl.y.toFloat())
-        path.close()
 
+        path.close()
         invalidate()
     }
 
@@ -83,16 +122,22 @@ class PaperRectangle : View {
         super.onDraw(canvas)
         canvas?.drawPath(path, fillPaint)
         canvas?.drawPath(path, rectPaint)
-        if (cropMode) {
-            canvas?.drawCircle(tl.x.toFloat(), tl.y.toFloat(), 20F, circlePaint)
-            canvas?.drawCircle(tr.x.toFloat(), tr.y.toFloat(), 20F, circlePaint)
-            canvas?.drawCircle(bl.x.toFloat(), bl.y.toFloat(), 20F, circlePaint)
-            canvas?.drawCircle(br.x.toFloat(), br.y.toFloat(), 20F, circlePaint)
+
+        if(cropMode) {
+            canvas?.drawCircle(tl.x.toFloat(), tl.y.toFloat(), 40F, extCirclePaint)
+            canvas?.drawCircle(tr.x.toFloat(), tr.y.toFloat(), 40F, extCirclePaint)
+            canvas?.drawCircle(bl.x.toFloat(), bl.y.toFloat(), 40F, extCirclePaint)
+            canvas?.drawCircle(br.x.toFloat(), br.y.toFloat(), 40F, extCirclePaint)
+
+            canvas?.drawCircle(tl.x.toFloat(), tl.y.toFloat(), 35F, intCirclePaint)
+            canvas?.drawCircle(tr.x.toFloat(), tr.y.toFloat(), 35F, intCirclePaint)
+            canvas?.drawCircle(bl.x.toFloat(), bl.y.toFloat(), 35F, intCirclePaint)
+            canvas?.drawCircle(br.x.toFloat(), br.y.toFloat(), 35F, intCirclePaint)
         }
+
     }
 
-    override fun onTouchEvent(event: MotionEvent?): Boolean {
-
+    fun onTouch(event: MotionEvent?): Boolean {
         if (!cropMode) {
             return false
         }
@@ -120,10 +165,6 @@ class PaperRectangle : View {
 
     private fun movePoints() {
         path.reset()
-        path.moveTo(tl.x.toFloat(), tl.y.toFloat())
-        path.lineTo(tr.x.toFloat(), tr.y.toFloat())
-        path.lineTo(br.x.toFloat(), br.y.toFloat())
-        path.lineTo(bl.x.toFloat(), bl.y.toFloat())
         path.close()
         invalidate()
     }
@@ -137,5 +178,9 @@ class PaperRectangle : View {
         br.y = br.y.div(ratioY)
         bl.x = bl.x.div(ratioX)
         bl.y = bl.y.div(ratioY)
+    }
+
+    private fun printLog(corners: Corners) {
+        Log.d(javaClass.simpleName, "size: ${corners.size.width}x${corners.size.height} - tl: ${tl.x}, ${tl.y} - tr: ${tr.x}, ${tr.y} - br: ${br.x}, ${br.y} - bl: ${bl.x}, ${bl.y}")
     }
 }
