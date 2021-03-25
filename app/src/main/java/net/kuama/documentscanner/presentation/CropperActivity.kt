@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Matrix
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
@@ -12,17 +11,11 @@ import android.view.ViewTreeObserver
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toUri
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import kotlinx.android.synthetic.main.activity_cropper.*
 import net.kuama.documentscanner.R
-import net.kuama.documentscanner.domain.Failure
-import net.kuama.documentscanner.domain.FindPaperSheetContours
-import net.kuama.documentscanner.domain.PerspectiveTransform
-import net.kuama.documentscanner.domain.UriToBitmap
-import net.kuama.scanner.data.Corners
 
-class CropperActivity: AppCompatActivity() {
+class CropperActivity : AppCompatActivity() {
     private lateinit var cropModel: CropperModel
     private lateinit var bitmapUri: Uri
 
@@ -54,7 +47,7 @@ class CropperActivity: AppCompatActivity() {
 
             // Wait for bitmap to be loaded on view, then draw corners
             cropWrap.waitForLayout {
-                cropHud.onCorners(corners = cropModel.corners.value ?: error("invalic Corners"), height = cropPreview.measuredHeight, width =  cropPreview.measuredWidth)
+                cropHud.onCorners(corners = cropModel.corners.value ?: error("invalic Corners"), height = cropPreview.measuredHeight, width = cropPreview.measuredWidth)
             }
         })
 
@@ -118,7 +111,6 @@ class CropperActivity: AppCompatActivity() {
         v.draw(c)
         return b
     }
-
 }
 
 private inline fun View.waitForLayout(crossinline yourAction: () -> Unit) {
@@ -135,4 +127,3 @@ private inline fun View.waitForLayout(crossinline yourAction: () -> Unit) {
         }
     })
 }
-
