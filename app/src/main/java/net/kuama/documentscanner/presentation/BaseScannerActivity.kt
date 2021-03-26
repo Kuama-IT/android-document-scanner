@@ -1,6 +1,8 @@
 package net.kuama.documentscanner.presentation
 
 import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.util.Log
@@ -14,6 +16,7 @@ import net.kuama.documentscanner.data.Loader
 import net.kuama.documentscanner.domain.Failure
 import net.kuama.documentscanner.domain.PerspectiveTransform
 import java.io.File
+import android.graphics.BitmapFactory
 
 @androidx.camera.core.ExperimentalGetImage
 abstract class BaseScannerActivity : AppCompatActivity() {
@@ -40,6 +43,12 @@ abstract class BaseScannerActivity : AppCompatActivity() {
             } else {
                 progress.visibility = View.INVISIBLE
             }
+        })
+
+        viewModel.lastUri.observe(this, Observer {
+            val intent = Intent(this, CropperActivity::class.java)
+            intent.putExtra("lastUri", it.toString())
+            this.startActivityForResult(intent, 0)
         })
 
         viewModel.errors.observe(this, Observer {
@@ -99,8 +108,26 @@ abstract class BaseScannerActivity : AppCompatActivity() {
         viewModel.onViewCreated(Loader(this), this, viewFinder)
     }
 
-    fun closePreview() {
+    private fun closePreview() {
+        root_view.visibility = View.GONE
+        viewModel.onClosePreview()
         finish()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode == Activity.RESULT_OK) {
+            val bitmapUri = data?.extras?.getString("croppedPath") ?: error("invalid path")
+
+            val image: File = File(bitmapUri)
+            val bmOptions = BitmapFactory.Options()
+            val bitmap = BitmapFactory.decodeFile(image.absolutePath, bmOptions)
+            onDocumentAccepted(bitmap)
+
+            image.delete()
+        } else {
+            viewModel.onViewCreated(Loader(this), this, viewFinder)
+        }
     }
 
     abstract fun onError(throwable: Throwable)

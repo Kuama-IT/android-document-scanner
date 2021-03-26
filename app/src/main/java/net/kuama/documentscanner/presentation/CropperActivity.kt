@@ -1,7 +1,7 @@
 package net.kuama.documentscanner.presentation
 
 import android.annotation.SuppressLint
-import android.content.Intent
+import android.app.Activity
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.net.Uri
@@ -14,6 +14,10 @@ import androidx.core.net.toUri
 import androidx.lifecycle.Observer
 import kotlinx.android.synthetic.main.activity_cropper.*
 import net.kuama.documentscanner.R
+import java.io.ByteArrayOutputStream
+import android.content.Intent
+import java.io.File
+import java.io.FileOutputStream
 
 class CropperActivity : AppCompatActivity() {
     private lateinit var cropModel: CropperModel
@@ -51,28 +55,16 @@ class CropperActivity : AppCompatActivity() {
             }
         })
 
-        cropModel.finalDocument.observe(this, Observer {
-            finalResult.setImageBitmap(cropModel.finalDocument.value)
-        })
-
         cropModel.bitmapToCrop.observe(this, Observer {
             cropResultPreview.setImageBitmap(cropModel.bitmapToCrop.value)
         })
 
-        acceptFinalResult.setOnClickListener {
-            finish()
-        }
-
         closeResultPreview.setOnClickListener {
-            val intent = Intent(this, ScannerActivity::class.java)
-            finish()
-            this.startActivity(intent)
+            closeActivity()
         }
 
         closeCropPreview.setOnClickListener {
-            val intent = Intent(this, ScannerActivity::class.java)
-            finish()
-            this.startActivity(intent)
+            closeActivity()
         }
 
         confirmCropPreview.setOnClickListener {
@@ -83,9 +75,16 @@ class CropperActivity : AppCompatActivity() {
         }
 
         confirmCropResult.setOnClickListener {
-            cropResultWrap.visibility = View.GONE
-            cropModel.onAcceptResult()
-            finalResultWrap.visibility = View.VISIBLE
+            val file = File("/storage/emulated/0/Documents/croppedDoc.jpg")
+            val outputStream = FileOutputStream(file)
+            outputStream.write(cropModel.bitmapToCrop.value?.toByteArray())
+            outputStream.close()
+
+            val resultIntent = Intent()
+            resultIntent.putExtra("croppedPath", "/storage/emulated/0/Documents/croppedDoc.jpg")
+            setResult(RESULT_OK, resultIntent)
+            // this.setResult(Activity.RESULT_OK)
+            finish()
         }
 
         cropPreview.setOnTouchListener { _, motionEvent ->
@@ -110,6 +109,17 @@ class CropperActivity : AppCompatActivity() {
         v.layout(v.left, v.top, v.right, v.bottom)
         v.draw(c)
         return b
+    }
+
+    private fun closeActivity() {
+        this.setResult(Activity.RESULT_CANCELED)
+        finish()
+    }
+}
+fun Bitmap.toByteArray(): ByteArray {
+    ByteArrayOutputStream().apply {
+        compress(Bitmap.CompressFormat.JPEG, 100, this)
+        return toByteArray()
     }
 }
 

@@ -2,8 +2,6 @@ package net.kuama.documentscanner.presentation
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Intent
-import android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
 import android.graphics.*
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
@@ -112,18 +110,13 @@ class ScannerViewModel : ViewModel() {
                     errors.value = exc
                 }
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                    lastUri = Uri.fromFile(photoFile)
-
-                    val intent = Intent(context, CropperActivity::class.java)
-                    intent.putExtra("lastUri", lastUri.toString())
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or FLAG_ACTIVITY_CLEAR_TASK
-                    context.startActivity(intent)
+                    lastUri.value = Uri.fromFile(photoFile)
                 }
             })
     }
 
     // CameraX setup
-    private var lastUri: Uri? = null
+    var lastUri: MutableLiveData<Uri> = MutableLiveData()
 
     @SuppressLint("RestrictedApi", "UnsafeExperimentalUsageError")
     private fun setupCamera(
@@ -186,5 +179,14 @@ class ScannerViewModel : ViewModel() {
     private fun handleFailure(failure: Failure) {
         errors.value = failure.origin
         isBusy.value = false
+    }
+
+    fun onClosePreview() {
+        lastUri.value?.let {
+            val file = File(it.path!!)
+            if (file.exists()) {
+                file.delete()
+            }
+        }
     }
 }
