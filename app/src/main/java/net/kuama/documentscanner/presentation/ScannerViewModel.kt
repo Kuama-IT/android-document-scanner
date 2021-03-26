@@ -187,4 +187,13 @@ class ScannerViewModel : ViewModel() {
         errors.value = failure.origin
         isBusy.value = false
     }
+
+    fun onClosePreview() {
+        lastUri?.let {
+            val file = File(it.path!!)
+            if (file.exists()) {
+                file.delete()
+            }
+        }
+    }
 }

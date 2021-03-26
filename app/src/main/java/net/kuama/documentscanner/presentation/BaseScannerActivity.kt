@@ -99,8 +99,9 @@ abstract class BaseScannerActivity : AppCompatActivity() {
         viewModel.onViewCreated(Loader(this), this, viewFinder)
     }
 
-    fun closePreview() {
-        finish()
+    private fun closePreview() {
+        previewWrap.visibility = View.GONE
+        viewModel.onClosePreview()
     }
 
     abstract fun onError(throwable: Throwable)

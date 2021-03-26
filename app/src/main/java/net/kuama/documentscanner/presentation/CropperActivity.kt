@@ -60,7 +60,9 @@ class CropperActivity : AppCompatActivity() {
         })
 
         acceptFinalResult.setOnClickListener {
+            val intent = Intent(this, ScannerActivity::class.java)
             finish()
+            this.startActivity(intent)
         }
 
         closeResultPreview.setOnClickListener {
