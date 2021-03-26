@@ -39,10 +39,6 @@ class CropperModel : ViewModel() {
         }
     }
 
-    fun onAcceptResult() {
-        finalDocument.value = bitmapToCrop.value
-    }
-
     fun onCornersAccepted(bitmap: Bitmap) {
         perspectiveTransform(
                 PerspectiveTransform.Params(
