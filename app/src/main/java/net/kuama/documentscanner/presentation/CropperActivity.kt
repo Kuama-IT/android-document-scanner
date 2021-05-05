@@ -2,40 +2,36 @@ package net.kuama.documentscanner.presentation
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.net.Uri
 import android.os.Bundle
+import android.view.MotionEvent
 import android.view.View
-import android.view.ViewTreeObserver
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toUri
-import androidx.lifecycle.Observer
-import kotlinx.android.synthetic.main.activity_cropper.*
-import net.kuama.documentscanner.R
-import java.io.ByteArrayOutputStream
-import android.content.Intent
+import net.kuama.documentscanner.databinding.ActivityCropperBinding
+import net.kuama.documentscanner.extensions.outputDirectory
+import net.kuama.documentscanner.extensions.toByteArray
+import net.kuama.documentscanner.extensions.triggerFullscreen
+import net.kuama.documentscanner.extensions.waitForLayout
 import java.io.File
 import java.io.FileOutputStream
+import java.util.*
 
 class CropperActivity : AppCompatActivity() {
     private lateinit var cropModel: CropperModel
     private lateinit var bitmapUri: Uri
+    private lateinit var binding: ActivityCropperBinding
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE
-                // Set the content to appear under the system bars so that the
-                // content doesn't resize when the system bars hide and show.
-                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                // Hide the nav bar and status bar
-                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_FULLSCREEN)
-        setContentView(R.layout.activity_cropper)
+        triggerFullscreen()
+        binding = ActivityCropperBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         val extras = intent.extras
         if (extras != null) {
@@ -45,50 +41,60 @@ class CropperActivity : AppCompatActivity() {
         val cropModel: CropperModel by viewModels()
 
         // Picture taken from User
-        cropModel.original.observe(this, Observer {
-            cropPreview.setImageBitmap(cropModel.original.value)
-            cropWrap.visibility = View.VISIBLE
+        cropModel.original.observe(this, {
+            binding.cropPreview.setImageBitmap(cropModel.original.value)
+            binding.cropWrap.visibility = View.VISIBLE
 
             // Wait for bitmap to be loaded on view, then draw corners
-            cropWrap.waitForLayout {
-                cropHud.onCorners(corners = cropModel.corners.value ?: error("invalic Corners"), height = cropPreview.measuredHeight, width = cropPreview.measuredWidth)
+            binding.cropWrap.waitForLayout {
+                binding.cropHud.onCorners(
+                    corners = cropModel.corners.value ?: error("invalid Corners"),
+                    height = binding.cropPreview.measuredHeight,
+                    width = binding.cropPreview.measuredWidth
+                )
             }
         })
 
-        cropModel.bitmapToCrop.observe(this, Observer {
-            cropResultPreview.setImageBitmap(cropModel.bitmapToCrop.value)
+        cropModel.bitmapToCrop.observe(this, {
+            binding.cropResultPreview.setImageBitmap(cropModel.bitmapToCrop.value)
         })
 
-        closeResultPreview.setOnClickListener {
+        binding.closeResultPreview.setOnClickListener {
             closeActivity()
         }
 
-        closeCropPreview.setOnClickListener {
+        binding.closeCropPreview.setOnClickListener {
             closeActivity()
         }
 
-        confirmCropPreview.setOnClickListener {
-            cropWrap.visibility = View.GONE
-            cropHud.visibility = View.GONE
-            loadBitmapFromView(cropPreview)?.let { bitmapToCrop -> cropModel.onCornersAccepted(bitmapToCrop) }
-            cropResultWrap.visibility = View.VISIBLE
+        binding.confirmCropPreview.setOnClickListener {
+            binding.cropWrap.visibility = View.GONE
+            binding.cropHud.visibility = View.GONE
+            loadBitmapFromView(binding.cropPreview)?.let { bitmapToCrop ->
+                cropModel.onCornersAccepted(
+                    bitmapToCrop
+                )
+            }
+            binding.cropResultWrap.visibility = View.VISIBLE
         }
 
-        confirmCropResult.setOnClickListener {
-            val file = File("/storage/emulated/0/Documents/croppedDoc.jpg")
+        binding.confirmCropResult.setOnClickListener {
+
+            val file = File(outputDirectory, "${UUID.randomUUID()}.jpg")
             val outputStream = FileOutputStream(file)
             outputStream.write(cropModel.bitmapToCrop.value?.toByteArray())
             outputStream.close()
 
             val resultIntent = Intent()
-            resultIntent.putExtra("croppedPath", "/storage/emulated/0/Documents/croppedDoc.jpg")
+            resultIntent.putExtra("croppedPath", file.absolutePath)
             setResult(RESULT_OK, resultIntent)
-            // this.setResult(Activity.RESULT_OK)
+
             finish()
         }
 
-        cropPreview.setOnTouchListener { _, motionEvent ->
-            cropHud.onTouch(motionEvent)
+        binding.cropPreview.setOnTouchListener { view: View, motionEvent: MotionEvent ->
+            view.performClick()
+            binding.cropHud.onTouch(motionEvent)
         }
 
         this.cropModel = cropModel
@@ -99,41 +105,20 @@ class CropperActivity : AppCompatActivity() {
         cropModel.onViewCreated(bitmapUri, contentResolver)
     }
 
-    private fun loadBitmapFromView(v: View): Bitmap? {
-        val b = Bitmap.createBitmap(
-            v.measuredWidth,
-            v.measuredHeight,
-            Bitmap.Config.ARGB_8888
-        )
-        val c = Canvas(b)
-        v.layout(v.left, v.top, v.right, v.bottom)
-        v.draw(c)
-        return b
-    }
-
     private fun closeActivity() {
         this.setResult(Activity.RESULT_CANCELED)
         finish()
     }
 }
-fun Bitmap.toByteArray(): ByteArray {
-    ByteArrayOutputStream().apply {
-        compress(Bitmap.CompressFormat.JPEG, 100, this)
-        return toByteArray()
-    }
-}
 
-private inline fun View.waitForLayout(crossinline yourAction: () -> Unit) {
-    val vto = viewTreeObserver
-    vto.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
-        override fun onGlobalLayout() {
-            when {
-                vto.isAlive -> {
-                    vto.removeOnGlobalLayoutListener(this)
-                    yourAction()
-                }
-                else -> viewTreeObserver.removeOnGlobalLayoutListener(this)
-            }
-        }
-    })
+private fun loadBitmapFromView(v: View): Bitmap? {
+    val b = Bitmap.createBitmap(
+        v.measuredWidth,
+        v.measuredHeight,
+        Bitmap.Config.ARGB_8888
+    )
+    val c = Canvas(b)
+    v.layout(v.left, v.top, v.right, v.bottom)
+    v.draw(c)
+    return b
 }

@@ -1,4 +1,4 @@
-package net.kuama.documentscanner.support
+package net.kuama.documentscanner.extensions
 
 import org.opencv.core.MatOfPoint
 import org.opencv.core.MatOfPoint2f

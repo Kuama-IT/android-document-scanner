@@ -43,7 +43,7 @@ data class Left<L, R>(
 
     override fun <ML, MR> flatMap(leftF: (L) -> Either<ML, MR>, rightF: (R) -> Either<ML, MR>) = leftF(value)
 
-    override fun filterLeft(filter: (L) -> Boolean, supplier: () -> R) = if (filter(value)) this else Right<L, R>(
+    override fun filterLeft(filter: (L) -> Boolean, supplier: () -> R) = if (filter(value)) this else Right(
         supplier()
     )
 
@@ -74,7 +74,7 @@ data class Right<L, R>(
 
     override fun filterLeft(filter: (L) -> Boolean, supplier: () -> R) = this
 
-    override fun filterRight(filter: (R) -> Boolean, supplier: () -> L) = if (filter(value)) this else Left<L, R>(
+    override fun filterRight(filter: (R) -> Boolean, supplier: () -> L) = if (filter(value)) this else Left(
         supplier()
     )
 }

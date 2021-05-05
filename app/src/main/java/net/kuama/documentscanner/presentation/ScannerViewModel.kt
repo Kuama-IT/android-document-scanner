@@ -2,7 +2,7 @@ package net.kuama.documentscanner.presentation
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.*
+import android.graphics.Bitmap
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.ImageAnalysis
@@ -18,10 +18,11 @@ import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import net.kuama.documentscanner.data.Loader
+import net.kuama.documentscanner.data.Corners
+import net.kuama.documentscanner.data.OpenCVLoader
 import net.kuama.documentscanner.data.OpenCvStatus
-import net.kuama.documentscanner.domain.*
-import net.kuama.scanner.data.Corners
+import net.kuama.documentscanner.domain.Failure
+import net.kuama.documentscanner.domain.FindPaperSheetContours
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -40,11 +41,11 @@ class ScannerViewModel : ViewModel() {
      * Observable data
      */
     val isBusy = MutableLiveData<Boolean>()
-    val openCv = MutableLiveData<OpenCvStatus>()
+    private val openCv = MutableLiveData<OpenCvStatus>()
     val corners = MutableLiveData<Corners?>()
     val errors = MutableLiveData<Throwable>()
     val flashStatus = MutableLiveData<FlashStatus>()
-    val documentPreview = MutableLiveData<Bitmap>()
+
     private var didLoadOpenCv = false
 
     /**
@@ -56,14 +57,14 @@ class ScannerViewModel : ViewModel() {
      * Tries to load OpenCv native libraries
      */
     fun onViewCreated(
-        loader: Loader,
+        openCVLoader: OpenCVLoader,
         scannerActivity: AppCompatActivity,
         viewFinder: PreviewView
     ) {
         isBusy.value = true
         setupCamera(scannerActivity, viewFinder) {
             if (!didLoadOpenCv) {
-                loader.load {
+                openCVLoader.load {
                     isBusy.value = false
                     openCv.value = it
                     didLoadOpenCv = true
@@ -92,6 +93,7 @@ class ScannerViewModel : ViewModel() {
             null -> controller.enableTorch(false)
         }
     }
+
     fun onTakePicture(outputDirectory: File, context: Context) {
         isBusy.value = true
         val photoFile = File(
@@ -109,6 +111,7 @@ class ScannerViewModel : ViewModel() {
                 override fun onError(exc: ImageCaptureException) {
                     errors.value = exc
                 }
+
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                     lastUri.value = Uri.fromFile(photoFile)
                 }
@@ -128,7 +131,7 @@ class ScannerViewModel : ViewModel() {
 
         val executor: Executor = ContextCompat.getMainExecutor(lifecycleOwner)
         controller = LifecycleCameraController(lifecycleOwner)
-        controller.setImageAnalysisAnalyzer(executor, ImageAnalysis.Analyzer { proxy: ImageProxy ->
+        controller.setImageAnalysisAnalyzer(executor, { proxy: ImageProxy ->
             // could not find a performing way to transform
             // the proxy to a bitmap, so we are reading
             // the bitmap directly from the preview view
@@ -153,7 +156,8 @@ class ScannerViewModel : ViewModel() {
                 override fun onSuccess(result: Void?) {
                     then()
                 }
-                override fun onFailure(t: Throwable?) {
+
+                override fun onFailure(t: Throwable) {
                     errors.value = t
                 }
             },
@@ -161,6 +165,7 @@ class ScannerViewModel : ViewModel() {
         )
         then.invoke()
     }
+
     private fun analyze(
         bitmap: Bitmap,
         onSuccess: (() -> Unit)? = null,
@@ -176,6 +181,7 @@ class ScannerViewModel : ViewModel() {
             }
         }
     }
+
     private fun handleFailure(failure: Failure) {
         errors.value = failure.origin
         isBusy.value = false

@@ -1,10 +1,10 @@
 package net.kuama.documentscanner.domain
 
 import android.graphics.Bitmap
+import net.kuama.documentscanner.data.Corners
 import net.kuama.documentscanner.support.Either
 import net.kuama.documentscanner.support.Left
 import net.kuama.documentscanner.support.Right
-import net.kuama.scanner.data.Corners
 import org.opencv.android.Utils
 import org.opencv.core.CvType
 import org.opencv.core.Mat
@@ -17,11 +17,12 @@ import kotlin.math.pow
 import kotlin.math.sqrt
 
 /**
- * Given a set of corners (see [FindPaperSheet]), and a source image,
- * crops the corners from the image and transform the shape represented by the corners
+ * Given a set of corners, and a source image,
+ * crops the corners from the image and transforms the shape represented by the corners
  * into a rectangle
  */
 class PerspectiveTransform : UseCase<Bitmap, PerspectiveTransform.Params>() {
+
     class Params(val bitmap: Bitmap, val corners: Corners)
 
     override suspend fun run(params: Params): Either<Failure, Bitmap> = try {
@@ -33,10 +34,10 @@ class PerspectiveTransform : UseCase<Bitmap, PerspectiveTransform.Params>() {
 
         val orderedCorners = sortPoints(
             arrayOf(
-            params.corners.corners[0] ?: error("Invalid corners"),
-            params.corners.corners[1] ?: error("Invalid corners"),
-            params.corners.corners[2] ?: error("Invalid corners"),
-            params.corners.corners[3] ?: error("Invalid corners")
+                params.corners.tl,
+                params.corners.tr,
+                params.corners.br,
+                params.corners.bl
             )
         )
 

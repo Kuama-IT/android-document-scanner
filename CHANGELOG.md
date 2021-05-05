@@ -1,5 +1,12 @@
 # Not Released
 
+# 0.1.8
+- Fixed hard-coded path for cropped documents
+- Move to `ViewBindings`
+- Bump kotlin to `1.4.32`
+- Fix deprecated `startActivityForResult`
+- Fix various warnings
+
 # 0.1.7
 - fixed close buttons
 
