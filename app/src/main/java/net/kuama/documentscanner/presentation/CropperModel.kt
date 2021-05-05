@@ -5,11 +5,11 @@ import android.graphics.Bitmap
 import android.net.Uri
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import net.kuama.documentscanner.data.Corners
 import net.kuama.documentscanner.domain.Failure
 import net.kuama.documentscanner.domain.FindPaperSheetContours
 import net.kuama.documentscanner.domain.PerspectiveTransform
 import net.kuama.documentscanner.domain.UriToBitmap
-import net.kuama.scanner.data.Corners
 
 class CropperModel : ViewModel() {
     private val perspectiveTransform: PerspectiveTransform = PerspectiveTransform()
@@ -19,7 +19,6 @@ class CropperModel : ViewModel() {
     val corners = MutableLiveData<Corners?>()
     val original = MutableLiveData<Bitmap>()
     val bitmapToCrop = MutableLiveData<Bitmap>()
-    val finalDocument = MutableLiveData<Bitmap>()
 
     fun onViewCreated(uri: Uri, contentResolver: ContentResolver) {
         uriToBitmap(

@@ -10,8 +10,8 @@ enum class OpenCvStatus {
     LOADED, ERROR
 }
 
-class Loader(context: Context) {
-    private val reference = WeakReference<Context>(context)
+class OpenCVLoader(context: Context) {
+    private val reference = WeakReference(context)
 
     private var onLoad: ((OpenCvStatus) -> Unit)? = null
     private val mLoaderCallback = object : BaseLoaderCallback(context.applicationContext) {

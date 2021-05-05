@@ -3,17 +3,20 @@ package net.kuama.documentscanner.presentation
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
-import net.kuama.scanner.data.Corners
+import net.kuama.documentscanner.data.Corners
 import org.opencv.core.Point
 import kotlin.math.abs
 
 class PaperRectangle : View {
     constructor(context: Context) : super(context)
     constructor(context: Context, attributes: AttributeSet) : super(context, attributes)
-    constructor(context: Context, attributes: AttributeSet, defTheme: Int) : super(context, attributes, defTheme)
+    constructor(context: Context, attributes: AttributeSet, defTheme: Int) : super(
+        context,
+        attributes,
+        defTheme
+    )
 
     private val rectPaint = Paint()
     private val extCirclePaint = Paint()
@@ -82,11 +85,11 @@ class PaperRectangle : View {
         cropMode = true
         ratioX = corners.size.width.div(width)
         ratioY = corners.size.height.div(height)
-        tl = corners.corners[0] ?: Point()
-        tr = corners.corners[1] ?: Point()
-        br = corners.corners[2] ?: Point()
-        bl = corners.corners[3] ?: Point()
-        printLog(corners)
+        tl = corners.tl
+        tr = corners.tr
+        br = corners.br
+        bl = corners.bl
+//        corners.log()
         resize()
         path.reset()
         path.close()
@@ -96,11 +99,11 @@ class PaperRectangle : View {
     fun onCornersDetected(corners: Corners) {
         ratioX = corners.size.width.div(measuredWidth)
         ratioY = corners.size.height.div(measuredHeight)
-        tl = corners.corners[0] ?: Point()
-        tr = corners.corners[1] ?: Point()
-        br = corners.corners[2] ?: Point()
-        bl = corners.corners[3] ?: Point()
-        printLog(corners)
+        tl = corners.tl
+        tr = corners.tr
+        br = corners.br
+        bl = corners.bl
+//        corners.log()
         resize()
         path.reset()
 
@@ -159,7 +162,7 @@ class PaperRectangle : View {
 
     private fun calculatePoint2Move(downX: Float, downY: Float) {
         val points = listOf(tl, tr, br, bl)
-        point2Move = points.minBy { abs((it.x - downX).times(it.y - downY)) } ?: tl
+        point2Move = points.minByOrNull { abs((it.x - downX).times(it.y - downY)) } ?: tl
     }
 
     private fun movePoints() {
@@ -177,9 +180,5 @@ class PaperRectangle : View {
         br.y = br.y.div(ratioY)
         bl.x = bl.x.div(ratioX)
         bl.y = bl.y.div(ratioY)
-    }
-
-    private fun printLog(corners: Corners) {
-        Log.d(javaClass.simpleName, "size: ${corners.size.width}x${corners.size.height} - tl: ${tl.x}, ${tl.y} - tr: ${tr.x}, ${tr.y} - br: ${br.x}, ${br.y} - bl: ${bl.x}, ${bl.y}")
     }
 }

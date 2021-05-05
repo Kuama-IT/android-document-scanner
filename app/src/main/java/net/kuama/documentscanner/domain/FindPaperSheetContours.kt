@@ -1,17 +1,16 @@
 package net.kuama.documentscanner.domain
 
 import android.graphics.Bitmap
+import net.kuama.documentscanner.data.Corners
 import net.kuama.documentscanner.support.Either
 import net.kuama.documentscanner.support.Left
 import net.kuama.documentscanner.support.Right
-import net.kuama.documentscanner.support.shape
-import net.kuama.scanner.data.Corners
+import net.kuama.documentscanner.extensions.shape
 import org.opencv.android.Utils
-import org.opencv.core.*
+import org.opencv.core.Mat
+import org.opencv.core.MatOfPoint
+import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
-import java.util.*
-import kotlin.Comparator
-import kotlin.collections.ArrayList
 
 class FindPaperSheetContours : UseCase<Pair<Bitmap, Corners?>, FindPaperSheetContours.Params>() {
     class Params(
@@ -67,9 +66,9 @@ class FindPaperSheetContours : UseCase<Pair<Bitmap, Corners?>, FindPaperSheetCon
                 .toTypedArray()
                 .toMutableList()
 
-            contours.sortWith(Comparator { lhs, rhs ->
+            contours.sortWith { lhs, rhs ->
                 Imgproc.contourArea(rhs).compareTo(Imgproc.contourArea(lhs))
-            })
+            }
 
             if (params.returnOriginalMat) {
                 Utils.matToBitmap(original, params.bitmap)
