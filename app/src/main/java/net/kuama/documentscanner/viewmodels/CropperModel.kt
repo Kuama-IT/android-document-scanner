@@ -5,6 +5,9 @@ import android.graphics.Bitmap
 import android.net.Uri
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.kuama.documentscanner.data.Corners
 import net.kuama.documentscanner.data.PaperSheetContoursResult
 import net.kuama.documentscanner.support.Failure
@@ -22,17 +25,19 @@ class CropperModel : ViewModel() {
     val bitmapToCrop = MutableLiveData<Bitmap>()
 
     fun onViewCreated(uri: Uri, contentResolver: ContentResolver) {
-        uriToBitmap(
-            UriToBitmap.Params(
-                uri = uri,
-                contentResolver = contentResolver
-            )
-        ) { either ->
-            either.fold(::handleFailure) { preview ->
-                analyze(preview, returnOriginalMat = true) { pair ->
-                    pair.corners?.let {
-                        originalBitmap.value = pair.bitmap
-                        corners.value = it
+        viewModelScope.launch {
+            uriToBitmap(
+                UriToBitmap.Params(
+                    uri = uri,
+                    contentResolver = contentResolver
+                )
+            ) { either ->
+                either.fold(::handleFailure) { preview ->
+                    analyze(preview, returnOriginalMat = true) { pair ->
+                        pair.corners?.let {
+                            originalBitmap.value = pair.bitmap
+                            corners.value = it
+                        }
                     }
                 }
             }
@@ -40,7 +45,8 @@ class CropperModel : ViewModel() {
     }
 
     fun onCornersAccepted(bitmap: Bitmap) {
-        perspectiveTransform(
+        viewModelScope.launch {
+            perspectiveTransform(
                 PerspectiveTransform.Params(
                     bitmap = bitmap,
                     corners = corners.value!!
@@ -50,6 +56,7 @@ class CropperModel : ViewModel() {
                     bitmapToCrop.value = bitmap
                 }
             }
+        }
     }
 
     private fun analyze(
@@ -58,17 +65,21 @@ class CropperModel : ViewModel() {
         returnOriginalMat: Boolean = false,
         callback: ((PaperSheetContoursResult) -> Unit)? = null
     ) {
-        findPaperSheetUseCase(
-            FindPaperSheetContours.Params(
-                bitmap,
-                returnOriginalMat
-            )
-        ) {
-            it.fold(::handleFailure) { paperSheetContoursResult: PaperSheetContoursResult ->
-                callback?.invoke(paperSheetContoursResult) ?: run { }
-                onSuccess?.invoke()
+
+        viewModelScope.launch {
+            findPaperSheetUseCase(
+                FindPaperSheetContours.Params(
+                    bitmap,
+                    returnOriginalMat
+                )
+            ) {
+                it.fold(::handleFailure) { paperSheetContoursResult: PaperSheetContoursResult ->
+                    callback?.invoke(paperSheetContoursResult) ?: run { }
+                    onSuccess?.invoke()
+                }
             }
         }
+
     }
 
     // TODO: Handle Failure

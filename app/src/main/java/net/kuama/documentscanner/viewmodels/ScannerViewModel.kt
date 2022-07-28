@@ -19,6 +19,8 @@ import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 import net.kuama.documentscanner.data.Corners
 import net.kuama.documentscanner.data.PaperSheetContoursResult
 import net.kuama.documentscanner.data.OpenCVLoader
@@ -170,12 +172,14 @@ class ScannerViewModel : ViewModel() {
         returnOriginalMat: Boolean = false,
         callback: ((PaperSheetContoursResult) -> Unit)? = null
     ) {
-        findPaperSheetUseCase(FindPaperSheetContours.Params(bitmap, returnOriginalMat)) {
-            it.fold(::handleFailure) { paperSheetContoursResult: PaperSheetContoursResult ->
-                callback?.invoke(paperSheetContoursResult) ?: run {
-                    corners.value = paperSheetContoursResult.corners
+        viewModelScope.launch {
+            findPaperSheetUseCase(FindPaperSheetContours.Params(bitmap, returnOriginalMat)) {
+                it.fold(::handleFailure) { paperSheetContoursResult: PaperSheetContoursResult ->
+                    callback?.invoke(paperSheetContoursResult) ?: run {
+                        corners.value = paperSheetContoursResult.corners
+                    }
+                    onSuccess?.invoke()
                 }
-                onSuccess?.invoke()
             }
         }
     }
