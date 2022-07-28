@@ -10,9 +10,12 @@ import org.opencv.imgproc.Imgproc
  */
 val MatOfPoint.shape: Array<Point>
     get() {
-        val c2f = MatOfPoint2f(*toArray())
-        val peri = Imgproc.arcLength(c2f, true)
-        val approx = MatOfPoint2f()
-        Imgproc.approxPolyDP(c2f, approx, 0.02 * peri, true)
-        return approx.toArray()
+        val inputMatrixFloat = MatOfPoint2f(*toArray())
+        val resultMatrixFloat = MatOfPoint2f()
+
+        val contourPerimeter = Imgproc.arcLength(inputMatrixFloat, true)
+
+        Imgproc.approxPolyDP(inputMatrixFloat, resultMatrixFloat, 0.02 * contourPerimeter, true)
+
+        return resultMatrixFloat.toArray()
     }

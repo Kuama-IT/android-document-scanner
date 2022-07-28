@@ -1,10 +1,9 @@
-package net.kuama.documentscanner.domain
+package net.kuama.documentscanner.support
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import net.kuama.documentscanner.support.Either
 
 abstract class UseCase<Type, in Params> where Type : Any? {
 

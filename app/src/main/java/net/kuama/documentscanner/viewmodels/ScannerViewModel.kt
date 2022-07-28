@@ -1,5 +1,6 @@
-package net.kuama.documentscanner.presentation
+package net.kuama.documentscanner.viewmodels
 
+import EOpenCvStatus
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
@@ -19,20 +20,17 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import net.kuama.documentscanner.data.Corners
+import net.kuama.documentscanner.data.PaperSheetContoursResult
 import net.kuama.documentscanner.data.OpenCVLoader
-import net.kuama.documentscanner.data.OpenCvStatus
-import net.kuama.documentscanner.domain.Failure
+import net.kuama.documentscanner.support.Failure
 import net.kuama.documentscanner.domain.FindPaperSheetContours
+import net.kuama.documentscanner.enums.EFlashStatus
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Executor
 
 private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
-
-enum class FlashStatus {
-    ON, OFF
-}
 
 class ScannerViewModel : ViewModel() {
     private lateinit var controller: LifecycleCameraController
@@ -41,10 +39,10 @@ class ScannerViewModel : ViewModel() {
      * Observable data
      */
     val isBusy = MutableLiveData<Boolean>()
-    private val openCv = MutableLiveData<OpenCvStatus>()
+    private val openCv = MutableLiveData<EOpenCvStatus>()
     val corners = MutableLiveData<Corners?>()
     val errors = MutableLiveData<Throwable>()
-    val flashStatus = MutableLiveData<FlashStatus>()
+    val flashStatus = MutableLiveData<EFlashStatus>()
 
     private var didLoadOpenCv = false
 
@@ -78,18 +76,18 @@ class ScannerViewModel : ViewModel() {
     fun onFlashToggle() {
         flashStatus.value?.let { currentValue ->
             flashStatus.value = when (currentValue) {
-                FlashStatus.ON -> FlashStatus.OFF
-                FlashStatus.OFF -> FlashStatus.ON
+                EFlashStatus.ON -> EFlashStatus.OFF
+                EFlashStatus.OFF -> EFlashStatus.ON
             }
         } ?: // default flash status is off
         run {
             // default flash status is off
             // default flash status is off
-            flashStatus.value = FlashStatus.ON
+            flashStatus.value = EFlashStatus.ON
         }
         when (flashStatus.value) {
-            FlashStatus.ON -> controller.enableTorch(true)
-            FlashStatus.OFF -> controller.enableTorch(false)
+            EFlashStatus.ON -> controller.enableTorch(true)
+            EFlashStatus.OFF -> controller.enableTorch(false)
             null -> controller.enableTorch(false)
         }
     }
@@ -131,7 +129,7 @@ class ScannerViewModel : ViewModel() {
 
         val executor: Executor = ContextCompat.getMainExecutor(lifecycleOwner)
         controller = LifecycleCameraController(lifecycleOwner)
-        controller.setImageAnalysisAnalyzer(executor, { proxy: ImageProxy ->
+        controller.setImageAnalysisAnalyzer(executor) { proxy: ImageProxy ->
             // could not find a performing way to transform
             // the proxy to a bitmap, so we are reading
             // the bitmap directly from the preview view
@@ -144,7 +142,7 @@ class ScannerViewModel : ViewModel() {
                 corners.value = null
                 proxy.close()
             }
-        })
+        }
         controller.imageAnalysisBackpressureStrategy = ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST
         controller.setEnabledUseCases(IMAGE_CAPTURE or IMAGE_ANALYSIS)
 
@@ -170,12 +168,12 @@ class ScannerViewModel : ViewModel() {
         bitmap: Bitmap,
         onSuccess: (() -> Unit)? = null,
         returnOriginalMat: Boolean = false,
-        callback: ((Pair<Bitmap, Corners?>) -> Unit)? = null
+        callback: ((PaperSheetContoursResult) -> Unit)? = null
     ) {
         findPaperSheetUseCase(FindPaperSheetContours.Params(bitmap, returnOriginalMat)) {
-            it.fold(::handleFailure) { pair: Pair<Bitmap, Corners?> ->
-                callback?.invoke(pair) ?: run {
-                    corners.value = pair.second
+            it.fold(::handleFailure) { paperSheetContoursResult: PaperSheetContoursResult ->
+                callback?.invoke(paperSheetContoursResult) ?: run {
+                    corners.value = paperSheetContoursResult.corners
                 }
                 onSuccess?.invoke()
             }

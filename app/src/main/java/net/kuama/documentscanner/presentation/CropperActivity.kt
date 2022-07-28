@@ -15,8 +15,8 @@ import androidx.core.net.toUri
 import net.kuama.documentscanner.databinding.ActivityCropperBinding
 import net.kuama.documentscanner.extensions.outputDirectory
 import net.kuama.documentscanner.extensions.toByteArray
-import net.kuama.documentscanner.extensions.triggerFullscreen
 import net.kuama.documentscanner.extensions.waitForLayout
+import net.kuama.documentscanner.viewmodels.CropperModel
 import java.io.File
 import java.io.FileOutputStream
 import java.util.*
@@ -29,7 +29,6 @@ class CropperActivity : AppCompatActivity() {
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        triggerFullscreen()
         binding = ActivityCropperBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -41,8 +40,8 @@ class CropperActivity : AppCompatActivity() {
         val cropModel: CropperModel by viewModels()
 
         // Picture taken from User
-        cropModel.original.observe(this, {
-            binding.cropPreview.setImageBitmap(cropModel.original.value)
+        cropModel.originalBitmap.observe(this) {
+            binding.cropPreview.setImageBitmap(cropModel.originalBitmap.value)
             binding.cropWrap.visibility = View.VISIBLE
 
             // Wait for bitmap to be loaded on view, then draw corners
@@ -53,11 +52,11 @@ class CropperActivity : AppCompatActivity() {
                     width = binding.cropPreview.measuredWidth
                 )
             }
-        })
+        }
 
-        cropModel.bitmapToCrop.observe(this, {
+        cropModel.bitmapToCrop.observe(this) {
             binding.cropResultPreview.setImageBitmap(cropModel.bitmapToCrop.value)
-        })
+        }
 
         binding.closeResultPreview.setOnClickListener {
             closeActivity()

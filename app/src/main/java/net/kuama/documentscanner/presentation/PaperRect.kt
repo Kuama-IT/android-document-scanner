@@ -11,12 +11,10 @@ import kotlin.math.abs
 
 class PaperRectangle : View {
     constructor(context: Context) : super(context)
+
     constructor(context: Context, attributes: AttributeSet) : super(context, attributes)
-    constructor(context: Context, attributes: AttributeSet, defTheme: Int) : super(
-        context,
-        attributes,
-        defTheme
-    )
+
+    constructor(context: Context, attributes: AttributeSet, defTheme: Int) : super(context, attributes, defTheme)
 
     private val rectPaint = Paint()
     private val extCirclePaint = Paint()
@@ -85,11 +83,11 @@ class PaperRectangle : View {
         cropMode = true
         ratioX = corners.size.width.div(width)
         ratioY = corners.size.height.div(height)
-        tl = corners.tl
-        tr = corners.tr
-        br = corners.br
-        bl = corners.bl
-//        corners.log()
+        tl = corners.topLeft
+        tr = corners.topRight
+        br = corners.bottomRight
+        bl = corners.bottomLeft
+
         resize()
         path.reset()
         path.close()
@@ -99,11 +97,11 @@ class PaperRectangle : View {
     fun onCornersDetected(corners: Corners) {
         ratioX = corners.size.width.div(measuredWidth)
         ratioY = corners.size.height.div(measuredHeight)
-        tl = corners.tl
-        tr = corners.tr
-        br = corners.br
-        bl = corners.bl
-//        corners.log()
+        tl = corners.topLeft
+        tr = corners.topRight
+        br = corners.bottomRight
+        bl = corners.bottomLeft
+
         resize()
         path.reset()
 

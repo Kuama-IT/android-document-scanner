@@ -1,4 +1,4 @@
-package net.kuama.documentscanner.presentation
+package net.kuama.documentscanner.viewmodels
 
 import android.content.ContentResolver
 import android.graphics.Bitmap
@@ -6,7 +6,8 @@ import android.net.Uri
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import net.kuama.documentscanner.data.Corners
-import net.kuama.documentscanner.domain.Failure
+import net.kuama.documentscanner.data.PaperSheetContoursResult
+import net.kuama.documentscanner.support.Failure
 import net.kuama.documentscanner.domain.FindPaperSheetContours
 import net.kuama.documentscanner.domain.PerspectiveTransform
 import net.kuama.documentscanner.domain.UriToBitmap
@@ -17,7 +18,7 @@ class CropperModel : ViewModel() {
     private val uriToBitmap: UriToBitmap = UriToBitmap()
 
     val corners = MutableLiveData<Corners?>()
-    val original = MutableLiveData<Bitmap>()
+    val originalBitmap = MutableLiveData<Bitmap>()
     val bitmapToCrop = MutableLiveData<Bitmap>()
 
     fun onViewCreated(uri: Uri, contentResolver: ContentResolver) {
@@ -26,12 +27,12 @@ class CropperModel : ViewModel() {
                 uri = uri,
                 contentResolver = contentResolver
             )
-        ) {
-            it.fold(::handleFailure) { preview ->
+        ) { either ->
+            either.fold(::handleFailure) { preview ->
                 analyze(preview, returnOriginalMat = true) { pair ->
-                    pair.second?.let {
-                        original.value = pair.first
-                        corners.value = pair.second
+                    pair.corners?.let {
+                        originalBitmap.value = pair.bitmap
+                        corners.value = it
                     }
                 }
             }
@@ -55,7 +56,7 @@ class CropperModel : ViewModel() {
         bitmap: Bitmap,
         onSuccess: (() -> Unit)? = null,
         returnOriginalMat: Boolean = false,
-        callback: ((Pair<Bitmap, Corners?>) -> Unit)? = null
+        callback: ((PaperSheetContoursResult) -> Unit)? = null
     ) {
         findPaperSheetUseCase(
             FindPaperSheetContours.Params(
@@ -63,12 +64,14 @@ class CropperModel : ViewModel() {
                 returnOriginalMat
             )
         ) {
-            it.fold(::handleFailure) { pair: Pair<Bitmap, Corners?> ->
-                callback?.invoke(pair) ?: run { }
+            it.fold(::handleFailure) { paperSheetContoursResult: PaperSheetContoursResult ->
+                callback?.invoke(paperSheetContoursResult) ?: run { }
                 onSuccess?.invoke()
             }
         }
     }
 
-    private fun handleFailure(failure: Failure) { }
+    // TODO: Handle Failure
+    private fun handleFailure(failure: Failure) {
+    }
 }
