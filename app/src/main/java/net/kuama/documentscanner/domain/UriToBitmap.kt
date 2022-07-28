@@ -7,9 +7,7 @@ import android.graphics.Matrix
 import androidx.exifinterface.media.ExifInterface
 import android.net.Uri
 import android.os.ParcelFileDescriptor
-import net.kuama.documentscanner.support.Either
-import net.kuama.documentscanner.support.Left
-import net.kuama.documentscanner.support.Right
+import net.kuama.documentscanner.support.*
 import java.io.FileDescriptor
 
 /**

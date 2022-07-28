@@ -2,23 +2,23 @@ package net.kuama.documentscanner.domain
 
 import android.graphics.Bitmap
 import net.kuama.documentscanner.data.Corners
-import net.kuama.documentscanner.support.Either
-import net.kuama.documentscanner.support.Left
-import net.kuama.documentscanner.support.Right
+import net.kuama.documentscanner.data.PaperSheetContoursResult
 import net.kuama.documentscanner.extensions.shape
+import net.kuama.documentscanner.support.*
 import org.opencv.android.Utils
 import org.opencv.core.Mat
 import org.opencv.core.MatOfPoint
 import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
 
-class FindPaperSheetContours : UseCase<Pair<Bitmap, Corners?>, FindPaperSheetContours.Params>() {
+class FindPaperSheetContours : UseCase<PaperSheetContoursResult, FindPaperSheetContours.Params>() {
+
     class Params(
         val bitmap: Bitmap,
         val returnOriginalMat: Boolean = false
     )
 
-    override suspend fun run(params: Params): Either<Failure, Pair<Bitmap, Corners?>> =
+    override suspend fun run(params: Params): Either<Failure, PaperSheetContoursResult> =
         try {
             val original = Mat()
             val modified = Mat()
@@ -37,28 +37,19 @@ class FindPaperSheetContours : UseCase<Pair<Bitmap, Corners?>, FindPaperSheetCon
             // Closing: Dilation followed by Erosion
             Imgproc.dilate(
                 modified, modified, Imgproc.getStructuringElement(
-                    Imgproc.MORPH_RECT, Size(
-                        8.0,
-                        8.0
-                    )
+                    Imgproc.MORPH_RECT, Size(8.0, 8.0)
                 )
             )
             Imgproc.erode(
                 modified, modified, Imgproc.getStructuringElement(
-                    Imgproc.MORPH_RECT,
-                    Size(3.0, 3.0)
+                    Imgproc.MORPH_RECT, Size(3.0, 3.0)
                 )
             )
 
             var contours: MutableList<MatOfPoint> = ArrayList()
             val hierarchy = Mat()
             Imgproc.findContours(
-                modified,
-                contours,
-                hierarchy,
-                Imgproc.RETR_LIST,
-                Imgproc.CHAIN_APPROX_SIMPLE
-            )
+                modified, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE)
 
             hierarchy.release()
             contours = contours
@@ -76,15 +67,11 @@ class FindPaperSheetContours : UseCase<Pair<Bitmap, Corners?>, FindPaperSheetCon
                 params.bitmap.recycle()
             }
 
-            Right(contours.firstOrNull()?.let {
-                Pair(
-                    params.bitmap,
-                    Corners(
-                        it.shape.toList(),
-                        original.size()
-                    )
-                )
-            } ?: Pair(params.bitmap, null))
+            val result: PaperSheetContoursResult = contours.firstOrNull()?.let {
+                PaperSheetContoursResult(params.bitmap, Corners(it.shape.toList(), original.size()))
+            } ?: PaperSheetContoursResult(params.bitmap, null)
+
+            Right(result)
         } catch (throwable: Throwable) {
             Left(Failure(throwable))
         }

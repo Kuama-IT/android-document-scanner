@@ -8,9 +8,11 @@ import java.io.File
 internal val Context.outputDirectory: File
     get() {
         val appContext = applicationContext
-        val mediaDir = externalMediaDirs.firstOrNull()?.let {
-            File(it, appContext.resources.getString(R.string.app_name)).apply { mkdirs() }
+
+        val mediaDir = File(filesDir, appContext.resources.getString(R.string.app_name)).apply {
+            mkdirs()
         }
-        return if (mediaDir != null && mediaDir.exists())
+
+        return if (mediaDir.exists())
             mediaDir else appContext.filesDir
     }

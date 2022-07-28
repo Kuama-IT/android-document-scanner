@@ -1,3 +1,3 @@
-include ":app"
 //include ":testapp"
+include ":app"
 rootProject.name = "DocumentScanner"

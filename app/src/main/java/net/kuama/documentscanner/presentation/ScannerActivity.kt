@@ -3,12 +3,12 @@ package net.kuama.documentscanner.presentation
 import android.graphics.Bitmap
 import android.widget.Toast
 import net.kuama.documentscanner.R
-import net.kuama.documentscanner.exceptions.NullCorners
+import net.kuama.documentscanner.exceptions.MissingSquareException
 
 class ScannerActivity : BaseScannerActivity() {
     override fun onError(throwable: Throwable) {
         when (throwable) {
-            is NullCorners -> Toast.makeText(
+            is MissingSquareException -> Toast.makeText(
                 this,
                 R.string.null_corners, Toast.LENGTH_LONG
             )
