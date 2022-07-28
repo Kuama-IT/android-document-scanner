@@ -14,5 +14,3 @@ abstract class UseCase<Type, in Params> where Type : Any? {
         GlobalScope.launch(Dispatchers.Main) { onResult(job.await()) }
     }
 }
-
-class Failure(val origin: Throwable)
