@@ -9,19 +9,20 @@ buildscript {
         classpath "com.android.tools.build:gradle:7.2.1"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "com.diffplug.spotless:spotless-plugin-gradle:5.12.1"
-        classpath "org.jacoco:org.jacoco.core:0.8.7"
+
     }
 }
 
 
 allprojects {
-    apply plugin: 'jacoco'
     repositories {
         google()
         mavenCentral()
         maven { url "https://jitpack.io" }
     }
 }
+
+apply from: 'jacoco/project.gradle'
 
 task clean(type: Delete) {
     delete rootProject.buildDir

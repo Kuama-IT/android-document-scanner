@@ -15,13 +15,18 @@ jobs:
       - name: Run Coverage
         run: |
           chmod +x gradlew
-          ./gradlew clean createDebugCoverageReport
+          ./gradlew clean debugCoverage allDebugCoverage
 
       - name: Add coverage to PR
         id: jacoco
         uses: madrapps/jacoco-report@v1.2
         with:
-          paths: ${{ github.workspace }}/app/build/reports/coverage/androidTest/debug/report.xml
+          paths: ${{ github.workspace }}/app/build/reports/jacoco/debugCoverage/debugCoverage.xml
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: 0
           min-coverage-changed-files: 0
+
+      - name: Get the Coverage info
+        run: |
+          echo "Total coverage ${{ steps.jacoco.outputs.coverage-overall }}"
+          echo "Changed Files coverage ${{ steps.jacoco.outputs.coverage-changed-files }}"
