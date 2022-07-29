@@ -33,6 +33,6 @@ object PerspectiveTransformUtils {
 
         val orderedCornerList = listOf<Point>(topLeft, topRight, bottomRight, bottomLeft)
 
-        return  Corners(orderedCornerList, sourceCorners.size)
+        return Corners(orderedCornerList, sourceCorners.size)
     }
 }
