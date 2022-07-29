@@ -4,6 +4,8 @@ apply plugin: "com.diffplug.spotless"
 apply plugin: "maven-publish"
 apply plugin: "jacoco"
 
+apply from: '../jacoco/modules.gradle'
+
 android {
     compileSdkVersion 32
     buildToolsVersion "30.0.3"
@@ -31,35 +33,13 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
-            testCoverageEnabled true
         }
-        debug {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
-            testCoverageEnabled true
-        }
-
     }
 
     buildFeatures {
         viewBinding true
     }
 
-    testOptions {
-        unitTests {
-            includeAndroidResources = true
-            unitTests.returnDefaultValues = true
-
-            all {
-                jacoco {
-                    includeNoLocationClasses = true
-                    jacoco.excludes = ['jdk.internal.*']
-
-                }
-            }
-
-        }
-    }
 }
 
 dependencies {
@@ -116,28 +96,6 @@ task sourceJar(type: Jar) {
 task androidSourcesJar(type: Jar) {
     archiveClassifier.set('sources')
     from android.sourceSets.main.java.srcDirs
-}
-
-
-tasks.withType(Test) {
-    finalizedBy(jacocoTestReport)
-}
-
-task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest', 'createDebugCoverageReport']) {
-    reports.csv.enabled(true)
-
-    def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*',
-                      '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
-
-    def debugTree = fileTree(dir: "${buildDir}/intermediates/classes/debug", excludes: fileFilter)
-    def mainSrc = "${project.projectDir}/src/main/java"
-
-    sourceDirectories.setFrom(files([mainSrc]))
-    classDirectories.setFrom(files([debugTree]))
-    executionData.setFrom(fileTree(dir: "$buildDir", includes: [
-            "jacoco/testDebugUnitTest.exec",
-            "outputs/code-coverage/connected/*coverage.ec"
-    ]))
 }
 
 // Because the components are created only during the afterEvaluate phase, you must
