@@ -16,6 +16,7 @@ import net.kuama.documentscanner.extensions.outputDirectory
 import net.kuama.documentscanner.extensions.toByteArray
 import net.kuama.documentscanner.extensions.waitForLayout
 import net.kuama.documentscanner.viewmodels.CropperModel
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.util.*
@@ -78,9 +79,12 @@ class CropperActivity : AppCompatActivity() {
         binding.confirmCropResult.setOnClickListener {
 
             val file = File(outputDirectory, "${UUID.randomUUID()}.jpg")
+
             val outputStream = FileOutputStream(file)
-            outputStream.write(cropModel.bitmapToCrop.value?.toByteArray())
+            val byteArrayOutputStream = ByteArrayOutputStream()
+            outputStream.write(cropModel.bitmapToCrop.value?.toByteArray(byteArrayOutputStream))
             outputStream.close()
+            byteArrayOutputStream.close()
 
             val resultIntent = Intent()
             resultIntent.putExtra("croppedPath", file.absolutePath)
