@@ -7,7 +7,6 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import net.kuama.documentscanner.data.Corners
 import net.kuama.documentscanner.data.PaperSheetContoursResult
 import net.kuama.documentscanner.support.Failure
@@ -79,7 +78,6 @@ class CropperModel : ViewModel() {
                 }
             }
         }
-
     }
 
     // TODO: Handle Failure

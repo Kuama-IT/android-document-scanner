@@ -1,6 +1,5 @@
 package net.kuama.documentscanner.presentation
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
@@ -26,7 +25,6 @@ class CropperActivity : AppCompatActivity() {
     private lateinit var bitmapUri: Uri
     private lateinit var binding: ActivityCropperBinding
 
-    @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityCropperBinding.inflate(layoutInflater)

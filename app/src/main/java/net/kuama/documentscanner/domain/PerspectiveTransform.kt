@@ -2,6 +2,7 @@ package net.kuama.documentscanner.domain
 
 import android.graphics.Bitmap
 import net.kuama.documentscanner.data.Corners
+import net.kuama.documentscanner.extensions.distanceTo
 import net.kuama.documentscanner.support.*
 import net.kuama.documentscanner.utils.PerspectiveTransformUtils
 import org.opencv.android.Utils
@@ -9,8 +10,6 @@ import org.opencv.core.CvType
 import org.opencv.core.Mat
 import org.opencv.imgproc.Imgproc
 import kotlin.math.max
-import kotlin.math.pow
-import kotlin.math.sqrt
 
 /**
  * Given a set of corners, and a source image,
@@ -22,43 +21,58 @@ class PerspectiveTransform : UseCase<Bitmap, PerspectiveTransform.Params>() {
     class Params(val bitmap: Bitmap, val corners: Corners)
 
     override suspend fun run(params: Params): Either<Failure, Bitmap> = try {
-        val src = Mat()
+        val sourceBitmapMatrix = Mat()
+        val srcMat = Mat(4, 1, CvType.CV_32FC2)
+        val dstMat = Mat(4, 1, CvType.CV_32FC2)
 
-        Utils.bitmapToMat(params.bitmap, src)
+        Utils.bitmapToMat(params.bitmap, sourceBitmapMatrix)
 
         val orderedCorners = PerspectiveTransformUtils.sortPoints(params.corners)
 
-        val widthA = sqrt(
-            (orderedCorners.bottomRight.x - orderedCorners.bottomLeft.x).pow(2.0) + (orderedCorners.bottomRight.y - orderedCorners.bottomLeft.y).pow(2.0)
-        )
-        val widthB = sqrt(
-            (orderedCorners.topRight.x - orderedCorners.topLeft.x).pow(2.0) + (orderedCorners.topRight.y - orderedCorners.topLeft.y).pow(2.0)
-        )
-        val dw = max(widthA, widthB)
-        val maxWidth = dw.toInt()
-        val heightA = sqrt(
-            (orderedCorners.topRight.x - orderedCorners.bottomRight.x).pow(2.0) + (orderedCorners.topRight.y - orderedCorners.bottomRight.y).pow(2.0)
-        )
-        val heightB = sqrt(
-            (orderedCorners.topLeft.x - orderedCorners.bottomLeft.x).pow(2.0) + (orderedCorners.topLeft.y - orderedCorners.bottomLeft.y).pow(2.0)
+        val bottomWidth = orderedCorners.bottomRight.distanceTo(orderedCorners.bottomLeft)
+
+        val topWidth = orderedCorners.topRight.distanceTo(orderedCorners.topLeft)
+
+        val maxWidth = max(bottomWidth, topWidth)
+
+        val rightHeight = orderedCorners.topRight.distanceTo(orderedCorners.bottomRight)
+
+        val leftHeight = orderedCorners.topLeft.distanceTo(orderedCorners.bottomLeft)
+
+        val maxHeight = max(rightHeight, leftHeight)
+
+        val transformedDocumentMatrix = Mat(maxHeight.toInt(), maxWidth.toInt(), CvType.CV_8UC4)
+
+        srcMat.put(0, 0, orderedCorners.topLeft.x, orderedCorners.topLeft.y,
+            orderedCorners.topRight.x, orderedCorners.topRight.y, orderedCorners.bottomRight.x,
+            orderedCorners.bottomRight.y, orderedCorners.bottomLeft.x, orderedCorners.bottomLeft.y
         )
 
-        val dh = max(heightA, heightB)
-        val maxHeight = java.lang.Double.valueOf(dh).toInt()
-        val doc = Mat(maxHeight, maxWidth, CvType.CV_8UC4)
-        val srcMat = Mat(4, 1, CvType.CV_32FC2)
-        val dstMat = Mat(4, 1, CvType.CV_32FC2)
-        srcMat.put(0, 0, orderedCorners.topLeft.x, orderedCorners.topLeft.y, orderedCorners.topRight.x, orderedCorners.topRight.y, orderedCorners.bottomRight.x, orderedCorners.bottomRight.y, orderedCorners.bottomLeft.x, orderedCorners.bottomLeft.y)
-        dstMat.put(0, 0, 0.0, 0.0, dw, 0.0, dw, dh, 0.0, dh)
-        val m = Imgproc.getPerspectiveTransform(srcMat, dstMat)
-        Imgproc.warpPerspective(src, doc, m, doc.size())
-        val bitmap = Bitmap.createBitmap(doc.cols(), doc.rows(), Bitmap.Config.ARGB_8888)
-        Utils.matToBitmap(doc, bitmap)
+        dstMat.put(0, 0, 0.0, 0.0, maxWidth, 0.0, maxWidth,
+            maxHeight, 0.0, maxHeight)
+
+        val perspectiveTransformMatrix = Imgproc.getPerspectiveTransform(srcMat, dstMat)
+
+        Imgproc.warpPerspective(
+            sourceBitmapMatrix, transformedDocumentMatrix,
+            perspectiveTransformMatrix, transformedDocumentMatrix.size()
+        )
+
+        val transformedBitmap = Bitmap
+            .createBitmap(
+                transformedDocumentMatrix.cols(),
+                transformedDocumentMatrix.rows(),
+                Bitmap.Config.ARGB_8888
+            )
+
+        Utils.matToBitmap(transformedDocumentMatrix, transformedBitmap)
+
         srcMat.release()
         dstMat.release()
-        m.release()
-        doc.release()
-        Right(bitmap)
+        perspectiveTransformMatrix.release()
+        transformedDocumentMatrix.release()
+
+        Right(transformedBitmap)
     } catch (throwable: Throwable) {
         Left(Failure(throwable))
     }
