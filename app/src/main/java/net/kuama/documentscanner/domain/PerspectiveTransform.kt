@@ -4,7 +4,6 @@ import android.graphics.Bitmap
 import net.kuama.documentscanner.data.Corners
 import net.kuama.documentscanner.extensions.distanceTo
 import net.kuama.documentscanner.support.*
-import net.kuama.documentscanner.utils.PerspectiveTransformUtils
 import org.opencv.android.Utils
 import org.opencv.core.CvType
 import org.opencv.core.Mat
@@ -27,25 +26,23 @@ class PerspectiveTransform : UseCase<Bitmap, PerspectiveTransform.Params>() {
 
         Utils.bitmapToMat(params.bitmap, sourceBitmapMatrix)
 
-        val orderedCorners = PerspectiveTransformUtils.sortPoints(params.corners)
+        val bottomWidth = params.corners.bottomRight.distanceTo(params.corners.bottomLeft)
 
-        val bottomWidth = orderedCorners.bottomRight.distanceTo(orderedCorners.bottomLeft)
-
-        val topWidth = orderedCorners.topRight.distanceTo(orderedCorners.topLeft)
+        val topWidth = params.corners.topRight.distanceTo(params.corners.topLeft)
 
         val maxWidth = max(bottomWidth, topWidth)
 
-        val rightHeight = orderedCorners.topRight.distanceTo(orderedCorners.bottomRight)
+        val rightHeight = params.corners.topRight.distanceTo(params.corners.bottomRight)
 
-        val leftHeight = orderedCorners.topLeft.distanceTo(orderedCorners.bottomLeft)
+        val leftHeight = params.corners.topLeft.distanceTo(params.corners.bottomLeft)
 
         val maxHeight = max(rightHeight, leftHeight)
 
         val transformedDocumentMatrix = Mat(maxHeight.toInt(), maxWidth.toInt(), CvType.CV_8UC4)
 
-        srcMat.put(0, 0, orderedCorners.topLeft.x, orderedCorners.topLeft.y,
-            orderedCorners.topRight.x, orderedCorners.topRight.y, orderedCorners.bottomRight.x,
-            orderedCorners.bottomRight.y, orderedCorners.bottomLeft.x, orderedCorners.bottomLeft.y
+        srcMat.put(0, 0, params.corners.topLeft.x, params.corners.topLeft.y,
+            params.corners.topRight.x, params.corners.topRight.y, params.corners.bottomRight.x,
+            params.corners.bottomRight.y, params.corners.bottomLeft.x, params.corners.bottomLeft.y
         )
 
         dstMat.put(0, 0, 0.0, 0.0, maxWidth, 0.0, maxWidth,

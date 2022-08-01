@@ -2,7 +2,7 @@ package net.kuama.documentscanner.domain
 
 import android.graphics.Bitmap
 import net.kuama.documentscanner.data.Corners
-import net.kuama.documentscanner.data.PaperSheetContoursResult
+import net.kuama.documentscanner.data.CornersFactory
 import net.kuama.documentscanner.extensions.shape
 import net.kuama.documentscanner.support.*
 import org.opencv.android.Utils
@@ -11,14 +11,11 @@ import org.opencv.core.MatOfPoint
 import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
 
-class FindPaperSheetContours : UseCase<PaperSheetContoursResult, FindPaperSheetContours.Params>() {
+class FindPaperSheetContours : UseCase<Corners?, FindPaperSheetContours.Params>() {
 
-    class Params(
-        val bitmap: Bitmap,
-        val returnOriginalMat: Boolean = false
-    )
+    class Params(val bitmap: Bitmap)
 
-    override suspend fun run(params: Params): Either<Failure, PaperSheetContoursResult> =
+    override suspend fun run(params: Params): Either<Failure, Corners?> =
         try {
             val original = Mat()
             val modified = Mat()
@@ -49,7 +46,8 @@ class FindPaperSheetContours : UseCase<PaperSheetContoursResult, FindPaperSheetC
             var contours: MutableList<MatOfPoint> = ArrayList()
             val hierarchy = Mat()
             Imgproc.findContours(
-                modified, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE)
+                modified, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE
+            )
 
             hierarchy.release()
             contours = contours
@@ -61,15 +59,9 @@ class FindPaperSheetContours : UseCase<PaperSheetContoursResult, FindPaperSheetC
                 Imgproc.contourArea(rhs).compareTo(Imgproc.contourArea(lhs))
             }
 
-            if (params.returnOriginalMat) {
-                Utils.matToBitmap(original, params.bitmap)
-            } else {
-                params.bitmap.recycle()
+            val result: Corners? = contours.firstOrNull()?.let {
+                CornersFactory.create(it.shape, original.size())
             }
-
-            val result: PaperSheetContoursResult = contours.firstOrNull()?.let {
-                PaperSheetContoursResult(params.bitmap, Corners(it.shape.toList(), original.size()))
-            } ?: PaperSheetContoursResult(params.bitmap, null)
 
             Right(result)
         } catch (throwable: Throwable) {
