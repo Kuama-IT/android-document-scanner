@@ -16,7 +16,7 @@ project.afterEvaluate {
                 def variantName = variant.name
                 def capVariantName = variantName.capitalize()
                 def testTaskName = "test${capVariantName}UnitTest"
-                tasks.create(name: "${variantName}Coverage", type: JacocoReport, dependsOn: testTaskName) {
+                tasks.create(name: "${variantName}Coverage", type: JacocoReport, dependsOn: [testTaskName, "connectedCheck"]) {
 
                     group = "Reporting"
                     description = "Generate Jacoco coverage reports for the ${variantName} build."
@@ -61,7 +61,9 @@ project.afterEvaluate {
 
                     sourceDirectories.from = files(sourceDirs)
 
-                    executionData.from = files(["${project.buildDir}/jacoco/${testTaskName}.exec"])
+                    def androidTestsData = fileTree(dir: "${buildDir}/outputs/code_coverage/${variantName}AndroidTests/connected/", includes: ["**/*.ec"])
+
+                    executionData.from = files(["${project.buildDir}/jacoco/${testTaskName}.exec", androidTestsData])
                 }
             }
 
