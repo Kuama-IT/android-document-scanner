@@ -8,7 +8,7 @@ import org.opencv.imgproc.Imgproc
 /**
  * A list of [MatOfPoint] representing an approximated contour
  */
-val MatOfPoint.shape: Array<Point>
+val MatOfPoint.shape: List<Point>
     get() {
         val inputMatrixFloat = MatOfPoint2f(*toArray())
         val resultMatrixFloat = MatOfPoint2f()
@@ -17,5 +17,5 @@ val MatOfPoint.shape: Array<Point>
 
         Imgproc.approxPolyDP(inputMatrixFloat, resultMatrixFloat, 0.02 * contourPerimeter, true)
 
-        return resultMatrixFloat.toArray()
+        return resultMatrixFloat.toList()
     }

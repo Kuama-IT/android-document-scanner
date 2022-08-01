@@ -22,7 +22,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import net.kuama.documentscanner.data.Corners
-import net.kuama.documentscanner.data.PaperSheetContoursResult
 import net.kuama.documentscanner.data.OpenCVLoader
 import net.kuama.documentscanner.support.Failure
 import net.kuama.documentscanner.domain.FindPaperSheetContours
@@ -168,16 +167,12 @@ class ScannerViewModel : ViewModel() {
 
     private fun analyze(
         bitmap: Bitmap,
-        onSuccess: (() -> Unit)? = null,
-        returnOriginalMat: Boolean = false,
-        callback: ((PaperSheetContoursResult) -> Unit)? = null
+        onSuccess: (() -> Unit)? = null
     ) {
         viewModelScope.launch {
-            findPaperSheetUseCase(FindPaperSheetContours.Params(bitmap, returnOriginalMat)) {
-                it.fold(::handleFailure) { paperSheetContoursResult: PaperSheetContoursResult ->
-                    callback?.invoke(paperSheetContoursResult) ?: run {
-                        corners.value = paperSheetContoursResult.corners
-                    }
+            findPaperSheetUseCase(FindPaperSheetContours.Params(bitmap)) {
+                it.fold(::handleFailure) { resultingCorners: Corners? ->
+                    corners.value = resultingCorners
                     onSuccess?.invoke()
                 }
             }

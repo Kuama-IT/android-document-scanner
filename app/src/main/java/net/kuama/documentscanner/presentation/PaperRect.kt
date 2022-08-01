@@ -24,10 +24,10 @@ class PaperRectangle : View {
     private val fillPaint = Paint()
     private var ratioX: Double = 1.0
     private var ratioY: Double = 1.0
-    private var tl: Point = Point()
-    private var tr: Point = Point()
-    private var br: Point = Point()
-    private var bl: Point = Point()
+    private var topLeft: Point = Point()
+    private var topRight: Point = Point()
+    private var bottomRight: Point = Point()
+    private var bottomLeft: Point = Point()
     private val path: Path = Path()
     private var point2Move = Point()
     private var cropMode = false
@@ -83,10 +83,10 @@ class PaperRectangle : View {
         cropMode = true
         ratioX = corners.size.width.div(width)
         ratioY = corners.size.height.div(height)
-        tl = corners.topLeft
-        tr = corners.topRight
-        br = corners.bottomRight
-        bl = corners.bottomLeft
+        topLeft = corners.topLeft
+        topRight = corners.topRight
+        bottomRight = corners.bottomRight
+        bottomLeft = corners.bottomLeft
 
         resize()
         path.reset()
@@ -97,18 +97,18 @@ class PaperRectangle : View {
     fun onCornersDetected(corners: Corners) {
         ratioX = corners.size.width.div(measuredWidth)
         ratioY = corners.size.height.div(measuredHeight)
-        tl = corners.topLeft
-        tr = corners.topRight
-        br = corners.bottomRight
-        bl = corners.bottomLeft
+        topLeft = corners.topLeft
+        topRight = corners.topRight
+        bottomRight = corners.bottomRight
+        bottomLeft = corners.bottomLeft
 
         resize()
         path.reset()
 
-        path.moveTo(tl.x.toFloat(), tl.y.toFloat())
-        path.lineTo(tr.x.toFloat(), tr.y.toFloat())
-        path.lineTo(br.x.toFloat(), br.y.toFloat())
-        path.lineTo(bl.x.toFloat(), bl.y.toFloat())
+        path.moveTo(topLeft.x.toFloat(), topLeft.y.toFloat())
+        path.lineTo(topRight.x.toFloat(), topRight.y.toFloat())
+        path.lineTo(bottomRight.x.toFloat(), bottomRight.y.toFloat())
+        path.lineTo(bottomLeft.x.toFloat(), bottomLeft.y.toFloat())
 
         path.close()
         invalidate()
@@ -125,15 +125,15 @@ class PaperRectangle : View {
         canvas?.drawPath(path, rectPaint)
 
         if (cropMode) {
-            canvas?.drawCircle(tl.x.toFloat(), tl.y.toFloat(), 40F, extCirclePaint)
-            canvas?.drawCircle(tr.x.toFloat(), tr.y.toFloat(), 40F, extCirclePaint)
-            canvas?.drawCircle(bl.x.toFloat(), bl.y.toFloat(), 40F, extCirclePaint)
-            canvas?.drawCircle(br.x.toFloat(), br.y.toFloat(), 40F, extCirclePaint)
+            canvas?.drawCircle(topLeft.x.toFloat(), topLeft.y.toFloat(), 40F, extCirclePaint)
+            canvas?.drawCircle(topRight.x.toFloat(), topRight.y.toFloat(), 40F, extCirclePaint)
+            canvas?.drawCircle(bottomLeft.x.toFloat(), bottomLeft.y.toFloat(), 40F, extCirclePaint)
+            canvas?.drawCircle(bottomRight.x.toFloat(), bottomRight.y.toFloat(), 40F, extCirclePaint)
 
-            canvas?.drawCircle(tl.x.toFloat(), tl.y.toFloat(), 35F, intCirclePaint)
-            canvas?.drawCircle(tr.x.toFloat(), tr.y.toFloat(), 35F, intCirclePaint)
-            canvas?.drawCircle(bl.x.toFloat(), bl.y.toFloat(), 35F, intCirclePaint)
-            canvas?.drawCircle(br.x.toFloat(), br.y.toFloat(), 35F, intCirclePaint)
+            canvas?.drawCircle(topLeft.x.toFloat(), topLeft.y.toFloat(), 35F, intCirclePaint)
+            canvas?.drawCircle(topRight.x.toFloat(), topRight.y.toFloat(), 35F, intCirclePaint)
+            canvas?.drawCircle(bottomLeft.x.toFloat(), bottomLeft.y.toFloat(), 35F, intCirclePaint)
+            canvas?.drawCircle(bottomRight.x.toFloat(), bottomRight.y.toFloat(), 35F, intCirclePaint)
         }
     }
 
@@ -159,8 +159,8 @@ class PaperRectangle : View {
     }
 
     private fun calculatePoint2Move(downX: Float, downY: Float) {
-        val points = listOf(tl, tr, br, bl)
-        point2Move = points.minByOrNull { abs((it.x - downX).times(it.y - downY)) } ?: tl
+        val points = listOf(topLeft, topRight, bottomRight, bottomLeft)
+        point2Move = points.minByOrNull { abs((it.x - downX).times(it.y - downY)) } ?: topLeft
     }
 
     private fun movePoints() {
@@ -170,13 +170,13 @@ class PaperRectangle : View {
     }
 
     private fun resize() {
-        tl.x = tl.x.div(ratioX)
-        tl.y = tl.y.div(ratioY)
-        tr.x = tr.x.div(ratioX)
-        tr.y = tr.y.div(ratioY)
-        br.x = br.x.div(ratioX)
-        br.y = br.y.div(ratioY)
-        bl.x = bl.x.div(ratioX)
-        bl.y = bl.y.div(ratioY)
+        topLeft.x = topLeft.x.div(ratioX)
+        topLeft.y = topLeft.y.div(ratioY)
+        topRight.x = topRight.x.div(ratioX)
+        topRight.y = topRight.y.div(ratioY)
+        bottomRight.x = bottomRight.x.div(ratioX)
+        bottomRight.y = bottomRight.y.div(ratioY)
+        bottomLeft.x = bottomLeft.x.div(ratioX)
+        bottomLeft.y = bottomLeft.y.div(ratioY)
     }
 }
