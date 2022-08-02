@@ -10,7 +10,7 @@ import org.opencv.imgproc.Imgproc
  */
 val MatOfPoint.shape: List<Point>
     get() {
-        val inputMatrixFloat = MatOfPoint2f(*toArray())
+        val inputMatrixFloat = MatOfPoint2f(*this.toArray())
         val resultMatrixFloat = MatOfPoint2f()
 
         val contourPerimeter = Imgproc.arcLength(inputMatrixFloat, true)
