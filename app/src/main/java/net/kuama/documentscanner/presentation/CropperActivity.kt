@@ -78,7 +78,7 @@ class CropperActivity : AppCompatActivity() {
 
         binding.confirmCropResult.setOnClickListener {
 
-            val file = File(outputDirectory, "${UUID.randomUUID()}.jpg")
+            val file = File(this.outputDirectory(), "${UUID.randomUUID()}.jpg")
 
             val outputStream = FileOutputStream(file)
             val byteArrayOutputStream = ByteArrayOutputStream()
