@@ -1,11 +1,12 @@
 <resources>
     <string name="app_name">Scanner</string>
     <string name="toggle_flash">Toggle flash</string>
-    <string name="null_corners">Nessun documento rilevato</string>
+    <string name="null_corners">No document found</string>
     <string name="confirm_document">Confirm document</string>
     <string name="close_document_preview">Close document preview</string>
     <string name="take_picture">Take picture</string>
     <string name="title_activity_main">MainActivity</string>
+    <string name="crop_error">Error while cropping the document</string>
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">First Fragment</string>
     <string name="second_fragment_label">Second Fragment</string>

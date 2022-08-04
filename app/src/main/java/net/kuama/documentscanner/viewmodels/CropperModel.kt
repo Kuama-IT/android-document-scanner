@@ -21,6 +21,7 @@ class CropperModel : ViewModel() {
     val corners = MutableLiveData<Corners>()
     val originalBitmap = MutableLiveData<Bitmap>()
     val bitmapToCrop = MutableLiveData<Bitmap>()
+    val errors = MutableLiveData<Throwable>()
 
     fun onViewCreated(uri: Uri, contentResolver: ContentResolver) {
         viewModelScope.launch {
@@ -72,7 +73,7 @@ class CropperModel : ViewModel() {
         return result
     }
 
-    // TODO: Handle Failure
     private fun handleFailure(failure: Failure) {
+        errors.value = failure.origin
     }
 }
