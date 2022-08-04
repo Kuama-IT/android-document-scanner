@@ -45,6 +45,7 @@ class ScannerViewModel : ViewModel() {
     val errors = MutableLiveData<Throwable>()
     val flashStatus = MutableLiveData<EFlashStatus>()
     var lastUri = MutableLiveData<Uri>()
+    val screenOrientationDeg = MutableLiveData<Int>()
 
     private var didLoadOpenCv = false
 
@@ -189,5 +190,9 @@ class ScannerViewModel : ViewModel() {
                 file.delete()
             }
         }
+    }
+
+    fun onScreenOrientationDegChange(orientationDeg: Int) {
+        screenOrientationDeg.value = orientationDeg
     }
 }

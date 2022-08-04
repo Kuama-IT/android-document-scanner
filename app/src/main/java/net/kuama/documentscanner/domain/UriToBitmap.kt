@@ -20,7 +20,7 @@ import java.io.FileDescriptor
  */
 class UriToBitmap : UseCase<Bitmap, UriToBitmap.Params>() {
 
-    class Params(val uri: Uri, val contentResolver: ContentResolver)
+    class Params(val uri: Uri, val screenOrientationDeg: Int? = null, val contentResolver: ContentResolver)
 
     override suspend fun run(params: Params): Either<Failure, Bitmap> = withContext(Dispatchers.IO) {
         try {
@@ -37,14 +37,20 @@ class UriToBitmap : UseCase<Bitmap, UriToBitmap.Params>() {
             // Thread Blocking call
             val exif = ExifInterface(params.uri.path.toString())
 
-            val orientation =
+            val pictureOrientation =
                 exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
             val matrix = Matrix()
 
-            when (orientation) {
+            when (pictureOrientation) {
                 ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90F)
                 ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180F)
                 ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270F)
+            }
+
+            when (params.screenOrientationDeg) {
+                90 -> matrix.postRotate(90F)
+                180 -> matrix.postRotate(180F)
+                270 -> matrix.postRotate(270F)
             }
 
             Right(

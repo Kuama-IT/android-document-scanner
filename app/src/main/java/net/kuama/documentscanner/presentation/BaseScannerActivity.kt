@@ -6,6 +6,8 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.util.Log
+import android.view.OrientationEventListener
+import android.view.Surface
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -59,6 +61,7 @@ abstract class BaseScannerActivity : AppCompatActivity() {
         viewModel.lastUri.observe(this) {
             val intent = Intent(this, CropperActivity::class.java)
             intent.putExtra("lastUri", it.toString())
+            intent.putExtra("screenOrientationDeg", viewModel.screenOrientationDeg.value)
 
             resultLauncher.launch(intent)
         }
@@ -98,17 +101,36 @@ abstract class BaseScannerActivity : AppCompatActivity() {
             closePreview()
         }
         this.viewModel = viewModel
+        orientationEventListener.enable()
     }
 
     override fun onResume() {
         super.onResume()
+        orientationEventListener.enable()
         viewModel.onViewCreated(OpenCVLoader(this), this, binding.viewFinder)
     }
 
     private fun closePreview() {
         binding.rootView.visibility = View.GONE
         viewModel.onClosePreview()
+        orientationEventListener.disable()
         finish()
+    }
+
+    private val orientationEventListener by lazy {
+        object : OrientationEventListener(this) {
+            override fun onOrientationChanged(orientation: Int) {
+                val rotationDegree = when (orientation) {
+                    ORIENTATION_UNKNOWN -> return
+                    in 45 until 135 -> 270
+                    in 135 until 225 -> 180
+                    in 225 until 315 -> 90
+                    else -> Surface.ROTATION_0
+                }
+
+                viewModel.onScreenOrientationDegChange(rotationDegree)
+            }
+        }
     }
 
     abstract fun onError(throwable: Throwable)

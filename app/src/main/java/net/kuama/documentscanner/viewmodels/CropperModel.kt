@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import net.kuama.documentscanner.data.Corners
+import net.kuama.documentscanner.data.CornersFactory
 import net.kuama.documentscanner.support.Failure
 import net.kuama.documentscanner.domain.FindPaperSheetContours
 import net.kuama.documentscanner.domain.PerspectiveTransform
@@ -23,12 +24,13 @@ class CropperModel : ViewModel() {
     val bitmapToCrop = MutableLiveData<Bitmap>()
     val errors = MutableLiveData<Throwable>()
 
-    fun onViewCreated(uri: Uri, contentResolver: ContentResolver) {
+    fun onViewCreated(uri: Uri, screenOrientationDeg: Int, contentResolver: ContentResolver) {
         viewModelScope.launch {
             uriToBitmap(
                 UriToBitmap.Params(
                     uri = uri,
-                    contentResolver = contentResolver
+                    contentResolver = contentResolver,
+                    screenOrientationDeg = screenOrientationDeg
                 )
             ) { either ->
                 either.fold(::handleFailure) { preview ->
@@ -43,15 +45,24 @@ class CropperModel : ViewModel() {
     }
 
     fun onCornersAccepted(bitmap: Bitmap) {
-        viewModelScope.launch {
-            perspectiveTransform(
-                PerspectiveTransform.Params(
-                    bitmap = bitmap,
-                    corners = corners.value!!
-                )
-            ) { result ->
-                result.fold(::handleFailure) { bitmap ->
-                    bitmapToCrop.value = bitmap
+        corners.value?.let { acceptedCorners ->
+            val acceptedAndOrderedCorners = listOf(
+                acceptedCorners.topLeft,
+                acceptedCorners.topRight,
+                acceptedCorners.bottomRight,
+                acceptedCorners.bottomLeft
+            )
+
+            viewModelScope.launch {
+                perspectiveTransform(
+                    PerspectiveTransform.Params(
+                        bitmap = bitmap,
+                        corners = CornersFactory.create(acceptedAndOrderedCorners, acceptedCorners.size)
+                    )
+                ) { it ->
+                    it.fold(::handleFailure) { bitmap ->
+                        bitmapToCrop.value = bitmap
+                    }
                 }
             }
         }
@@ -65,8 +76,8 @@ class CropperModel : ViewModel() {
             findPaperSheetUseCase(
                 FindPaperSheetContours.Params(bitmap)
             ) {
-                it.fold(::handleFailure) { paperSheetContoursResult: Corners? ->
-                    result = paperSheetContoursResult
+                it.fold(::handleFailure) { corners: Corners? ->
+                    result = corners
                 }
             }
         }
