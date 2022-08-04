@@ -91,7 +91,7 @@ abstract class BaseScannerActivity : AppCompatActivity() {
         }
 
         binding.shutter.setOnClickListener {
-            viewModel.onTakePicture(outputDirectory, this)
+            viewModel.onTakePicture(this.outputDirectory(), this)
         }
 
         binding.closeScanner.setOnClickListener {
