@@ -18,10 +18,10 @@ object PointUtils {
             }
 
         return Corners(
-            topLeft = Collections.min(cornersList, sumComparator),
-            topRight = Collections.min(cornersList, diffComparator),
-            bottomRight = Collections.max(cornersList, sumComparator),
-            bottomLeft = Collections.max(cornersList, diffComparator),
+            topLeft = Collections.max(cornersList, diffComparator),
+            topRight = Collections.max(cornersList, sumComparator),
+            bottomRight = Collections.min(cornersList, diffComparator),
+            bottomLeft = Collections.min(cornersList, sumComparator),
             size = originalSize
         )
     }
