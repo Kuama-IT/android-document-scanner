@@ -28,6 +28,7 @@ import java.util.*
 class CropperActivity : AppCompatActivity() {
     private lateinit var cropModel: CropperModel
     private lateinit var bitmapUri: Uri
+    private var screenOrientationDeg: Int = 0
     private lateinit var binding: ActivityCropperBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,6 +40,7 @@ class CropperActivity : AppCompatActivity() {
         val extras = intent.extras
         if (extras != null) {
             bitmapUri = intent.extras?.getString("lastUri")?.toUri() ?: error("invalid uri")
+            screenOrientationDeg = if (intent.extras?.getInt("screenOrientationDeg") != null) intent.extras!!.getInt("screenOrientationDeg") else 0
         }
 
         val cropModel: CropperModel by viewModels()
@@ -112,7 +114,7 @@ class CropperActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        cropModel.onViewCreated(bitmapUri, contentResolver)
+        cropModel.onViewCreated(bitmapUri, screenOrientationDeg, contentResolver)
     }
 
     private fun closeActivity() {
