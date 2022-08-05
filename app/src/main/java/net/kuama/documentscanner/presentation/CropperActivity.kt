@@ -114,7 +114,7 @@ class CropperActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        cropModel.onViewCreated(bitmapUri, screenOrientationDeg, contentResolver)
+        cropModel.onViewCreated(bitmapUri, screenOrientationDeg)
     }
 
     private fun closeActivity() {

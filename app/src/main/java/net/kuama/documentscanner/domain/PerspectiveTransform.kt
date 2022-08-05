@@ -27,26 +27,36 @@ class PerspectiveTransform : UseCase<Bitmap, PerspectiveTransform.Params>() {
         Utils.bitmapToMat(params.bitmap, sourceBitmapMatrix)
 
         val bottomWidth = params.corners.bottomRight.distanceTo(params.corners.bottomLeft)
-
         val topWidth = params.corners.topRight.distanceTo(params.corners.topLeft)
 
         val maxWidth = max(bottomWidth, topWidth)
 
         val rightHeight = params.corners.topRight.distanceTo(params.corners.bottomRight)
-
         val leftHeight = params.corners.topLeft.distanceTo(params.corners.bottomLeft)
 
         val maxHeight = max(rightHeight, leftHeight)
 
         val transformedDocumentMatrix = Mat(maxHeight.toInt(), maxWidth.toInt(), CvType.CV_8UC4)
 
-        srcMat.put(0, 0, params.corners.topLeft.x, params.corners.topLeft.y,
-            params.corners.topRight.x, params.corners.topRight.y, params.corners.bottomRight.x,
-            params.corners.bottomRight.y, params.corners.bottomLeft.x, params.corners.bottomLeft.y
+        srcMat.put(
+            0, 0,
+            params.corners.bottomLeft.x,
+            params.corners.bottomLeft.y,
+            params.corners.bottomRight.x,
+            params.corners.bottomRight.y,
+            params.corners.topRight.x,
+            params.corners.topRight.y,
+            params.corners.topLeft.x,
+            params.corners.topLeft.y
         )
 
-        dstMat.put(0, 0, 0.0, 0.0, maxWidth, 0.0, maxWidth,
-            maxHeight, 0.0, maxHeight)
+        dstMat.put(
+            0, 0,
+            0.0, 0.0,
+            maxWidth, 0.0,
+            maxWidth, maxHeight,
+            0.0, maxHeight
+        )
 
         val perspectiveTransformMatrix = Imgproc.getPerspectiveTransform(srcMat, dstMat)
 

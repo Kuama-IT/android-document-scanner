@@ -31,20 +31,20 @@ class FindPaperSheetContoursInstrumentedTest {
                     if (resultingCorners != null) {
 
                         // TopLeft
-                        assertEquals(770.0, resultingCorners.topLeft.x, 10.0)
-                        assertEquals(2013.0, resultingCorners.topLeft.y, 10.0)
+                        assertEquals(770.0, resultingCorners.bottomLeft.x, 10.0)
+                        assertEquals(2013.0, resultingCorners.bottomLeft.y, 10.0)
 
                         // TopRight
-                        assertEquals(2093.0, resultingCorners.topRight.x, 10.0)
-                        assertEquals(2015.0, resultingCorners.topRight.y, 10.0)
+                        assertEquals(2093.0, resultingCorners.bottomRight.x, 10.0)
+                        assertEquals(2015.0, resultingCorners.bottomRight.y, 10.0)
 
                         // BottomLeft
-                        assertEquals(659.0, resultingCorners.bottomLeft.x, 10.0)
-                        assertEquals(3427.0, resultingCorners.bottomLeft.y, 10.0)
+                        assertEquals(659.0, resultingCorners.topLeft.x, 10.0)
+                        assertEquals(3427.0, resultingCorners.topLeft.y, 10.0)
 
                         // BottomRight
-                        assertEquals(2107.0, resultingCorners.bottomRight.x, 10.0)
-                        assertEquals(3414.0, resultingCorners.bottomRight.y, 10.0)
+                        assertEquals(2107.0, resultingCorners.topRight.x, 10.0)
+                        assertEquals(3414.0, resultingCorners.topRight.y, 10.0)
                     } else {
                         fail("Corners were not found")
                     }
