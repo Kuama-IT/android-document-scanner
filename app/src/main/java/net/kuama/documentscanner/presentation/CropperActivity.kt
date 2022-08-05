@@ -1,5 +1,6 @@
 package net.kuama.documentscanner.presentation
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
@@ -8,9 +9,11 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.MotionEvent
 import android.view.View
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toUri
+import net.kuama.documentscanner.R
 import net.kuama.documentscanner.databinding.ActivityCropperBinding
 import net.kuama.documentscanner.extensions.outputDirectory
 import net.kuama.documentscanner.extensions.toByteArray
@@ -21,6 +24,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.util.*
 
+@SuppressLint("ClickableViewAccessibility")
 class CropperActivity : AppCompatActivity() {
     private lateinit var cropModel: CropperModel
     private lateinit var bitmapUri: Uri
@@ -29,6 +33,7 @@ class CropperActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityCropperBinding.inflate(layoutInflater)
+
         setContentView(binding.root)
 
         val extras = intent.extras
@@ -51,6 +56,10 @@ class CropperActivity : AppCompatActivity() {
                     width = binding.cropPreview.measuredWidth
                 )
             }
+        }
+
+        cropModel.errors.observe(this) {
+            Toast.makeText(this, this.resources.getText(R.string.crop_error), Toast.LENGTH_SHORT).show()
         }
 
         cropModel.bitmapToCrop.observe(this) {

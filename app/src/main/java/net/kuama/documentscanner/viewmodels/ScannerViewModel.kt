@@ -1,6 +1,6 @@
 package net.kuama.documentscanner.viewmodels
 
-import EOpenCvStatus
+import net.kuama.documentscanner.enums.EOpenCvStatus
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
@@ -44,6 +44,7 @@ class ScannerViewModel : ViewModel() {
     val corners = MutableLiveData<Corners?>()
     val errors = MutableLiveData<Throwable>()
     val flashStatus = MutableLiveData<EFlashStatus>()
+    var lastUri = MutableLiveData<Uri>()
 
     private var didLoadOpenCv = false
 
@@ -116,9 +117,6 @@ class ScannerViewModel : ViewModel() {
                 }
             })
     }
-
-    // CameraX setup
-    var lastUri: MutableLiveData<Uri> = MutableLiveData()
 
     @SuppressLint("RestrictedApi", "UnsafeExperimentalUsageError")
     private fun setupCamera(

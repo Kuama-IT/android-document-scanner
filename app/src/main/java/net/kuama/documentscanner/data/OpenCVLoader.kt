@@ -1,6 +1,6 @@
 package net.kuama.documentscanner.data
 
-import EOpenCvStatus
+import net.kuama.documentscanner.enums.EOpenCvStatus
 import android.content.Context
 import org.opencv.android.BaseLoaderCallback
 import org.opencv.android.LoaderCallbackInterface
