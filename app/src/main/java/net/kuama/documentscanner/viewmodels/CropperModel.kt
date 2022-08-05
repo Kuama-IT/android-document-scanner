@@ -56,9 +56,7 @@ class CropperModel : ViewModel() {
         }
     }
 
-    private fun analyze(
-        bitmap: Bitmap
-    ): Corners? {
+    private fun analyze(bitmap: Bitmap): Corners? {
         var result: Corners? = null
         viewModelScope.launch {
             findPaperSheetUseCase(
