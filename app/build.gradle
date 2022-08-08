@@ -36,6 +36,9 @@ android {
             testCoverageEnabled true
             debuggable true
         }
+        debug {
+            testCoverageEnabled true
+        }
     }
 
     buildFeatures {

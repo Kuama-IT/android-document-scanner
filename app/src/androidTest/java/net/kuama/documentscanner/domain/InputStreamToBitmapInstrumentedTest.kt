@@ -16,7 +16,7 @@ import java.io.InputStream
  */
 
 @RunWith(AndroidJUnit4::class)
-class UriToBitmapInstrumentedTest {
+class InputStreamToBitmapInstrumentedTest {
     private val uriToBitmap: InputStreamToBitmap = InputStreamToBitmap()
 
     @Test
