@@ -1,75 +1,131 @@
 apply plugin: 'jacoco'
 
 jacoco {
-    toolVersion '0.8.7'
+    toolVersion = "0.8.8"
 }
 
+// Enable test result in terminal
 tasks.withType(Test) {
+    testLogging {
+        exceptionFormat "full"
+        events "skipped", "passed", "failed"
+        showStandardStreams true
+    }
+
     jacoco.includeNoLocationClasses = true
     jacoco.excludes = ['jdk.internal.*']
 }
 
-project.afterEvaluate {
+variants().all { variant ->
+    def tag = "[jacoco.gradle]"
+    def variantName = variant.name
+    def variantCapName = variant.name.capitalize()
+    def fullTestTask = "testSuite${variantCapName}JacocoReport"
+    def unitTestTask = "test${variantCapName}UnitTest"
 
-    (android.hasProperty('applicationVariants') ? android.'applicationVariants' : android.'libraryVariants')
-            .all { variant ->
-                def variantName = variant.name
-                def capVariantName = variantName.capitalize()
-                def testTaskName = "test${capVariantName}UnitTest"
-                tasks.create(name: "${variantName}Coverage", type: JacocoReport, dependsOn: [testTaskName, "connectedCheck"]) {
+    //
+    // use create<>CoverateReport since connectedCheck task does not generate jacoco reports so we
+    // need to depend on tasks that run tests + coverage
+    //
+    def instrumentedTestTask = "create${variantCapName}CoverageReport"
 
-                    group = "Reporting"
-                    description = "Generate Jacoco coverage reports for the ${variantName} build."
+    if (variantCapName == "Release") {
+        logger.info "$tag ${project.name} Task '$fullTestTask' is not enabled for Release builds."
+        return
+    }
 
-                    reports {
-                        html.enabled(true)
-                        xml.enabled(true)
-                        csv.enabled(true)
-                    }
+    if (project.tasks.findByName(unitTestTask) == null ||
+            project.tasks.findByName(instrumentedTestTask) ==
+            null) {
+        logger.warn "$tag ${project.name} Task '$fullTestTask' was not created, you can enable it by passing -PcoverageEnabled or by setting testCoverageEnabled=true in gradle.android setup."
 
-                    def excludes = [
-                            '**/R.class',
-                            '**/R$*.class',
-                            '**/BuildConfig.*',
-                            '**/Manifest*.*',
-                            '**/*Test*.*',
-                            'android/**/*.*',
-                            'androidx/**/*.*',
-                            '**/*$ViewInjector*.*',
-                            '**/*Dagger*.*',
-                            '**/*MembersInjector*.*',
-                            '**/*_Factory.*',
-                            '**/*_Provide*Factory*.*',
-                            '**/*_ViewBinding*.*',
-                            '**/AutoValue_*.*',
-                            '**/R2.class',
-                            '**/R2$*.class',
-                            '**/*Directions$*',
-                            '**/*Directions.*',
-                            '**/*Binding.*'
-                    ]
+        return
+    }
 
-                    def jClasses = "${project.buildDir}/intermediates/javac/${variantName}/classes"
-                    def kClasses = "${project.buildDir}/tmp/kotlin-classes/${variantName}"
-                    def javaClasses = fileTree(dir: jClasses, excludes: excludes)
+    task(fullTestTask, type: JacocoReport, dependsOn: [instrumentedTestTask, unitTestTask]) {
+        group = "Reporting"
+        description =
+                "Generate Jacoco coverage reports for $variantCapName Instrumented and UnitTest Tests"
+        onlyIf = { return true }
 
-                    def kotlinClasses = fileTree(dir: kClasses, excludes: excludes)
+        reports {
+            xml.enabled(true)
+            html.enabled(true)
+            csv.enabled(true)
+        }
 
-                    classDirectories.from = files([javaClasses, kotlinClasses])
-                    def sourceDirs = ["${project.projectDir}/src/main/java", "${project.projectDir}/src/main/kotlin",
-                                      "${project.projectDir}/src/${variantName}/java", "${project.projectDir}/src/${variantName}/kotlin"]
+        def androidFilter = [
+                '**/R.class',
+                '**/R$*.class',
+                '**/BuildConfig.*',
+                '**/Manifest*.*',
+                '**/*$ViewInjector*.*',
+                '**/*$ViewBinder*.*',
+                '**/*$Lambda$*.*', // Jacoco can not handle several "$" in class name.
+                '**/*Module.*', // Modules for Dagger.
+                '**/*Dagger*.*', // Dagger auto-generated code.
+                '**/*MembersInjector*.*', // Dagger auto-generated code.
+                '**/*_Provide*Factory*.*',
+                '**/*_Factory.*', //Dagger auto-generated code
+                '**/*$*$*.*', // Anonymous classes generated by kotlin
+                //add libraries
+                'androidx/**/*.*',
+                'android/**/*.*',
+                //remove what we don't test
+                'androidTest/**/*.*',
+                'test/**/*.*',
+                '**/injector/**/*.*',
+                '**/model/**/*.*',
+                '**/mock/**/*.*',
+                '**/event/**/*.*',
+                '**/**_ViewBinding**',
+                '**/*EventType.*',
+                '**/**Mocked']
 
-                    sourceDirectories.from = files(sourceDirs)
+        def librariesFilter = [
+                '**/com/barista_v/**/*.*',
+                '**/com/baristav/**/*.*',
+                '**/com/esotericsoftware/**/*.*',
+                '**/com/crashlytics/**/*.*',
+                '**/com/facebook/**/*.*',
+                '**/com/jakewharton/**/*.*',
+                '**/com/onesignal/**/*.*',
+                '**/com/viewpagerindicator/**/*.*',
+                '**/io/fabric/**/*.*',
+                '**/io/reactivex/**/*.*',
+                '**/net/danlew/**/*.*',
+                '**/timber/**/*.*',
+                '**/removeme/**/*.*',
+                '**/squareup/**/*.*',
+                '/net/kuama/**/support/*.*',
+                '/net/kuama/**/databinding/*.*']
 
-                    def androidTestsData = fileTree(dir: "${buildDir}/outputs/code_coverage/${variantName}AndroidTests/connected/", includes: ["**/*.ec"])
+        def fileFilter = androidFilter + librariesFilter
 
-                    executionData.from = files(["${project.buildDir}/jacoco/${testTaskName}.exec", androidTestsData])
-                }
-            }
+        def classTree = fileTree(dir: variant.javaCompiler.destinationDir, excludes: fileFilter) +
+                fileTree(dir: "$buildDir/tmp/kotlin-classes/$variantName", excludes: fileFilter)
 
-    tasks.register('coverAllVariants') {
-        dependsOn(provider {
-            tasks.findAll { task -> task.name.endsWith('Coverage') }
-        })
+        sourceDirectories.from = files(["src/main/java",
+                                        "src/main/kotlin",
+                                        "src/$variantName/java",
+                                        "src/$variantName/kotlin"])
+
+        classDirectories.from = files([classTree])
+
+        def unitTestCoverage = "${project.buildDir}/outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec"
+        def instrumentationTestCoverageDirs = project.fileTree("${project.buildDir}/outputs/code_coverage")
+                .matching { include "**/*.ec" }
+
+        def allCodeCoverageFiles = [instrumentationTestCoverageDirs.files, unitTestCoverage]
+
+        executionData.from = files(allCodeCoverageFiles)
+    }
+}
+
+def variants() {
+    if (project.android.hasProperty('libraryVariants')) {
+        return project.android.libraryVariants
+    } else {
+        return project.android.applicationVariants
     }
 }

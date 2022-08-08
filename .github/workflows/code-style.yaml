@@ -5,7 +5,7 @@ name: Code Style
 
 jobs:
   spotless-check:
-    name: Spotless Style Check
+    name: Spotless Style Check && Android Lint
     runs-on: ubuntu-20.04
 
     steps:
@@ -17,18 +17,4 @@ jobs:
           distribution: 'adopt'
 
       - run: ./gradlew --no-daemon spotlessCheck
-
-  lint:
-    name: Android Lint
-    runs-on: ubuntu-20.04
-    timeout-minutes: 15
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - uses: actions/setup-java@v2
-        with:
-          java-version: 11
-          distribution: 'adopt'
-
       - run: ./gradlew --no-daemon lintRelease

@@ -8,8 +8,7 @@ buildscript {
     dependencies {
         classpath "com.android.tools.build:gradle:7.2.1"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "com.diffplug.spotless:spotless-plugin-gradle:5.12.1"
-
+        classpath "com.diffplug.spotless:spotless-plugin-gradle:5.12.5"
     }
 }
 
@@ -21,8 +20,6 @@ allprojects {
         maven { url "https://jitpack.io" }
     }
 }
-
-apply from: 'jacoco/project.gradle'
 
 task clean(type: Delete) {
     delete rootProject.buildDir
