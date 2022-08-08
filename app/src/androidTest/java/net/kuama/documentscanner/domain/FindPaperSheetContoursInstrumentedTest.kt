@@ -2,7 +2,8 @@ package net.kuama.documentscanner.domain
 
 import android.graphics.BitmapFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runTest
 import net.kuama.documentscanner.utils.TestUtils
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -15,6 +16,7 @@ class FindPaperSheetContoursInstrumentedTest {
 
     private val findPaperSheetUseCase: FindPaperSheetContours = FindPaperSheetContours()
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun findPaperSheetUseCase_valid_input_return_correct_result() {
         TestUtils.loadOpenCvLibrary()
@@ -23,7 +25,7 @@ class FindPaperSheetContoursInstrumentedTest {
 
         val bitmap = BitmapFactory.decodeStream(inputStream)
 
-        runBlocking {
+        runTest {
             findPaperSheetUseCase(
                 FindPaperSheetContours.Params(bitmap)
             ) { either ->
