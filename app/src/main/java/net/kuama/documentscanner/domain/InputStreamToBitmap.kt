@@ -1,41 +1,28 @@
 package net.kuama.documentscanner.domain
 
-import android.content.ContentResolver
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import androidx.exifinterface.media.ExifInterface
-import android.net.Uri
-import android.os.ParcelFileDescriptor
 import kotlinx.coroutines.*
 import net.kuama.documentscanner.support.*
-import java.io.FileDescriptor
+import java.io.InputStream
 
 /**
- * Given a image URI, tries to load the image into a bitmap, checking also the image rotation
+ * Given a image inputStream, tries to load the image into a bitmap, checking also the image rotation
  *
  * NB: Inappropriate blocking method call cannot be suppressed since it will still block the thread
  * on which is running. The only way to bypass the problem is to use the IO thread to offload the
  * main thread. All Kotlin I/O class are blocking (since they are inherited from Java)
  */
-class UriToBitmap : UseCase<Bitmap, UriToBitmap.Params>() {
+class InputStreamToBitmap : UseCase<Bitmap, InputStreamToBitmap.Params>() {
 
-    class Params(val uri: Uri, val screenOrientationDeg: Int? = null, val contentResolver: ContentResolver)
+    class Params(val inputStream: InputStream, val screenOrientationDeg: Int? = null)
 
     override suspend fun run(params: Params): Either<Failure, Bitmap> = withContext(Dispatchers.IO) {
         try {
-            // Thread Blocking call
-            val parcelFileDescriptor: ParcelFileDescriptor =
-                params.contentResolver.openFileDescriptor(params.uri, "r") ?: throw NullPointerException("Null Content Resolver")
-
-            val fileDescriptor: FileDescriptor = parcelFileDescriptor.fileDescriptor
-            val image = BitmapFactory.decodeFileDescriptor(fileDescriptor)
-
-            // Thread Blocking call
-            parcelFileDescriptor.close()
-
-            // Thread Blocking call
-            val exif = ExifInterface(params.uri.path.toString())
+            val image = BitmapFactory.decodeStream(params.inputStream)
+            val exif = ExifInterface(params.inputStream)
 
             val pictureOrientation =
                 exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)

@@ -1,8 +1,8 @@
 package net.kuama.documentscanner.viewmodels
 
-import android.content.ContentResolver
 import android.graphics.Bitmap
 import android.net.Uri
+import androidx.core.net.toFile
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,24 +12,24 @@ import net.kuama.documentscanner.data.CornersFactory
 import net.kuama.documentscanner.support.Failure
 import net.kuama.documentscanner.domain.FindPaperSheetContours
 import net.kuama.documentscanner.domain.PerspectiveTransform
-import net.kuama.documentscanner.domain.UriToBitmap
+import net.kuama.documentscanner.domain.InputStreamToBitmap
 
 class CropperModel : ViewModel() {
     private val perspectiveTransform: PerspectiveTransform = PerspectiveTransform()
     private val findPaperSheetUseCase: FindPaperSheetContours = FindPaperSheetContours()
-    private val uriToBitmap: UriToBitmap = UriToBitmap()
+    private val uriToBitmap: InputStreamToBitmap = InputStreamToBitmap()
 
     val corners = MutableLiveData<Corners>()
     val originalBitmap = MutableLiveData<Bitmap>()
     val bitmapToCrop = MutableLiveData<Bitmap>()
     val errors = MutableLiveData<Throwable>()
 
-    fun onViewCreated(uri: Uri, screenOrientationDeg: Int, contentResolver: ContentResolver) {
+    fun onViewCreated(uri: Uri, screenOrientationDeg: Int) {
         viewModelScope.launch {
+
             uriToBitmap(
-                UriToBitmap.Params(
-                    uri = uri,
-                    contentResolver = contentResolver,
+                InputStreamToBitmap.Params(
+                    inputStream = uri.toFile().inputStream(),
                     screenOrientationDeg = screenOrientationDeg
                 )
             ) { either ->
