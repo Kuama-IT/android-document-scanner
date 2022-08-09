@@ -5,11 +5,8 @@ import android.content.Context
 import org.opencv.android.BaseLoaderCallback
 import org.opencv.android.LoaderCallbackInterface
 import org.opencv.android.OpenCVLoader
-import java.lang.ref.WeakReference
 
 class OpenCVLoader(context: Context) {
-    private val reference = WeakReference(context)
-
     private var onLoad: ((EOpenCvStatus) -> Unit)? = null
 
     private val mLoaderCallback = object : BaseLoaderCallback(context.applicationContext) {
@@ -26,16 +23,10 @@ class OpenCVLoader(context: Context) {
         }
     }
 
-    fun load(callback: (EOpenCvStatus) -> Unit) = reference.get()?.let {
+    fun load(callback: (EOpenCvStatus) -> Unit) {
         onLoad = callback
-        if (!OpenCVLoader.initDebug()) {
-            OpenCVLoader.initAsync(
-                OpenCVLoader.OPENCV_VERSION,
-                it.applicationContext,
-                mLoaderCallback
-            )
-        } else {
-            mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS)
-        }
+
+        OpenCVLoader.initDebug()
+        mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS)
     }
 }
