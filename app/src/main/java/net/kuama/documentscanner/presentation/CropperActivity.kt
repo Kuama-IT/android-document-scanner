@@ -13,11 +13,11 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toUri
+import androidx.core.view.doOnNextLayout
 import net.kuama.documentscanner.R
 import net.kuama.documentscanner.databinding.ActivityCropperBinding
 import net.kuama.documentscanner.extensions.outputDirectory
 import net.kuama.documentscanner.extensions.toByteArray
-import net.kuama.documentscanner.extensions.waitForLayout
 import net.kuama.documentscanner.viewmodels.CropperModel
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -51,7 +51,7 @@ class CropperActivity : AppCompatActivity() {
             binding.cropWrap.visibility = View.VISIBLE
 
             // Wait for bitmap to be loaded on view, then draw corners
-            binding.cropWrap.waitForLayout {
+            binding.cropWrap.doOnNextLayout {
                 binding.cropHud.onCorners(
                     corners = cropModel.corners.value ?: error("invalid Corners"),
                     height = binding.cropPreview.measuredHeight,
