@@ -23,7 +23,6 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import net.kuama.documentscanner.data.Corners
 import net.kuama.documentscanner.data.OpenCVLoader
-import net.kuama.documentscanner.support.Failure
 import net.kuama.documentscanner.domain.FindPaperSheetContours
 import net.kuama.documentscanner.enums.EFlashStatus
 import java.io.File
@@ -169,18 +168,11 @@ class ScannerViewModel : ViewModel() {
         onSuccess: (() -> Unit)? = null
     ) {
         viewModelScope.launch {
-            findPaperSheetUseCase(FindPaperSheetContours.Params(bitmap)) {
-                it.fold(::handleFailure) { resultingCorners: Corners? ->
-                    corners.value = resultingCorners
-                    onSuccess?.invoke()
-                }
+            findPaperSheetUseCase(FindPaperSheetContours.Params(bitmap)) { resultingCorners: Corners? ->
+                corners.value = resultingCorners
+                onSuccess?.invoke()
             }
         }
-    }
-
-    private fun handleFailure(failure: Failure) {
-        errors.value = failure.origin
-        isBusy.value = false
     }
 
     fun onClosePreview() {

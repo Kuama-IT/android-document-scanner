@@ -26,7 +26,6 @@ class CropperModel : ViewModel() {
 
     fun onViewCreated(uri: Uri, screenOrientationDeg: Int) {
         viewModelScope.launch {
-
             uriToBitmap(
                 InputStreamToBitmap.Params(
                     inputStream = uri.toFile().inputStream(),
@@ -57,12 +56,13 @@ class CropperModel : ViewModel() {
                 perspectiveTransform(
                     PerspectiveTransform.Params(
                         bitmap = bitmap,
-                        corners = CornersFactory.create(acceptedAndOrderedCorners, acceptedCorners.size)
+                        corners = CornersFactory.create(
+                            acceptedAndOrderedCorners,
+                            acceptedCorners.size
+                        )
                     )
-                ) { it ->
-                    it.fold(::handleFailure) { bitmap ->
-                        bitmapToCrop.value = bitmap
-                    }
+                ) { bitmap ->
+                    bitmapToCrop.value = bitmap
                 }
             }
         }
@@ -73,10 +73,8 @@ class CropperModel : ViewModel() {
         viewModelScope.launch {
             findPaperSheetUseCase(
                 FindPaperSheetContours.Params(bitmap)
-            ) {
-                it.fold(::handleFailure) { corners: Corners? ->
-                    result = corners
-                }
+            ) { corners: Corners? ->
+                result = corners
             }
         }
         return result
