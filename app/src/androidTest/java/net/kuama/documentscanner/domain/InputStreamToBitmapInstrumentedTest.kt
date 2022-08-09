@@ -2,7 +2,8 @@ package net.kuama.documentscanner.domain
 
 import android.graphics.BitmapFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Test
@@ -19,6 +20,7 @@ import java.io.InputStream
 class InputStreamToBitmapInstrumentedTest {
     private val uriToBitmap: InputStreamToBitmap = InputStreamToBitmap()
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun uriToBitmap_valid_input_should_return_correct_result() {
         val inputStream: InputStream? = this.javaClass.classLoader
@@ -31,7 +33,7 @@ class InputStreamToBitmapInstrumentedTest {
 
         if (inputStream != null) {
 
-            runBlocking {
+            runTest {
                 uriToBitmap(
                     InputStreamToBitmap.Params(
                         inputStream = inputStream,
