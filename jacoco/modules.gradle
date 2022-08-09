@@ -119,6 +119,17 @@ variants().all { variant ->
         def allCodeCoverageFiles = [instrumentationTestCoverageDirs.files, unitTestCoverage]
 
         executionData.from = files(allCodeCoverageFiles)
+
+        doLast {
+            copy {
+                from 'build/reports/jacoco/testSuiteDebugJacocoReport/testSuiteDebugJacocoReport.xml'
+                into "${projectDir}/reports"
+            }
+            copy {
+                from 'build/reports/jacoco/testSuiteDebugJacocoReport/testSuiteDebugJacocoReport.csv'
+                into "${projectDir}/reports"
+            }
+        }
     }
 }
 
