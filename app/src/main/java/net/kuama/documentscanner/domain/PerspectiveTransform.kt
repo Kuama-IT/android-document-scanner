@@ -15,11 +15,11 @@ import kotlin.math.max
  * crops the corners from the image and transforms the shape represented by the corners
  * into a rectangle
  */
-class PerspectiveTransform : UseCase<Bitmap, PerspectiveTransform.Params>() {
+class PerspectiveTransform : InfallibleUseCase<Bitmap, PerspectiveTransform.Params>() {
 
     class Params(val bitmap: Bitmap, val corners: Corners)
 
-    override suspend fun run(params: Params): Either<Failure, Bitmap> = try {
+    override suspend fun run(params: Params): Bitmap {
         val sourceBitmapMatrix = Mat()
         val srcMat = Mat(4, 1, CvType.CV_32FC2)
         val dstMat = Mat(4, 1, CvType.CV_32FC2)
@@ -79,8 +79,6 @@ class PerspectiveTransform : UseCase<Bitmap, PerspectiveTransform.Params>() {
         perspectiveTransformMatrix.release()
         transformedDocumentMatrix.release()
 
-        Right(transformedBitmap)
-    } catch (throwable: Throwable) {
-        Left(Failure(throwable))
+        return transformedBitmap
     }
 }
