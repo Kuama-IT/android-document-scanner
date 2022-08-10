@@ -1,8 +1,11 @@
 package net.kuama.documentscanner.viewmodels
 
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import android.net.Uri
 import androidx.core.net.toFile
+import androidx.exifinterface.media.ExifInterface
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,12 +15,10 @@ import net.kuama.documentscanner.data.CornersFactory
 import net.kuama.documentscanner.support.Failure
 import net.kuama.documentscanner.domain.FindPaperSheetContours
 import net.kuama.documentscanner.domain.PerspectiveTransform
-import net.kuama.documentscanner.domain.InputStreamToBitmap
 
 class CropperModel : ViewModel() {
     private val perspectiveTransform: PerspectiveTransform = PerspectiveTransform()
     private val findPaperSheetUseCase: FindPaperSheetContours = FindPaperSheetContours()
-    private val uriToBitmap: InputStreamToBitmap = InputStreamToBitmap()
 
     val corners = MutableLiveData<Corners>()
     val originalBitmap = MutableLiveData<Bitmap>()
@@ -25,23 +26,33 @@ class CropperModel : ViewModel() {
     val errors = MutableLiveData<Throwable>()
 
     fun onViewCreated(uri: Uri, screenOrientationDeg: Int) {
-        viewModelScope.launch {
+        val image = BitmapFactory.decodeStream(uri.toFile().inputStream())
+        val exif = ExifInterface(uri.toFile().inputStream())
 
-            uriToBitmap(
-                InputStreamToBitmap.Params(
-                    inputStream = uri.toFile().inputStream(),
-                    screenOrientationDeg = screenOrientationDeg
-                )
-            ) { either ->
-                either.fold(::handleFailure) { preview ->
-                    originalBitmap.value = preview
-                    val resultingCorners = analyze(preview)
-                    resultingCorners?.let {
-                        corners.value = it
-                    }
-                }
-            }
+        val pictureOrientation =
+            exif.getAttributeInt(
+                ExifInterface.TAG_ORIENTATION,
+                ExifInterface.ORIENTATION_NORMAL
+            )
+        val matrix = Matrix()
+
+        when (pictureOrientation) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90F)
+            ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180F)
+            ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270F)
         }
+
+        when (screenOrientationDeg) {
+            90 -> matrix.postRotate(90F)
+            180 -> matrix.postRotate(180F)
+            270 -> matrix.postRotate(270F)
+        }
+
+        val rotatedBitmap = Bitmap.createBitmap(
+            image, 0, 0, image.width, image.height, matrix, true
+        )
+        originalBitmap.value = rotatedBitmap
+        analyze(rotatedBitmap)
     }
 
     fun onCornersAccepted(bitmap: Bitmap) {
@@ -68,18 +79,16 @@ class CropperModel : ViewModel() {
         }
     }
 
-    private fun analyze(bitmap: Bitmap): Corners? {
-        var result: Corners? = null
+    private fun analyze(bitmap: Bitmap) {
         viewModelScope.launch {
             findPaperSheetUseCase(
                 FindPaperSheetContours.Params(bitmap)
             ) {
-                it.fold(::handleFailure) { corners: Corners? ->
-                    result = corners
+                it.fold(::handleFailure) { foundCorners: Corners? ->
+                    corners.value = foundCorners
                 }
             }
         }
-        return result
     }
 
     private fun handleFailure(failure: Failure) {
