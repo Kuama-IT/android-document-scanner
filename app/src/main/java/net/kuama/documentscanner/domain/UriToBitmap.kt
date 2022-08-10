@@ -3,10 +3,10 @@ package net.kuama.documentscanner.domain
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
+import android.net.Uri
+import androidx.core.net.toFile
 import androidx.exifinterface.media.ExifInterface
-import kotlinx.coroutines.*
 import net.kuama.documentscanner.support.*
-import java.io.InputStream
 
 /**
  * Given a image inputStream, tries to load the image into a bitmap, checking also the image rotation
@@ -15,17 +15,20 @@ import java.io.InputStream
  * on which is running. The only way to bypass the problem is to use the IO thread to offload the
  * main thread. All Kotlin I/O class are blocking (since they are inherited from Java)
  */
-class InputStreamToBitmap : UseCase<Bitmap, InputStreamToBitmap.Params>() {
+class UriToBitmap : UseCase<Bitmap, UriToBitmap.Params>() {
 
-    class Params(val inputStream: InputStream, val screenOrientationDeg: Int? = null)
+    class Params(val uri: Uri, val screenOrientationDeg: Int)
 
-    override suspend fun run(params: Params): Either<Failure, Bitmap> = withContext(Dispatchers.IO) {
+    override suspend fun run(params: Params): Either<Failure, Bitmap> =
         try {
-            val image = BitmapFactory.decodeStream(params.inputStream)
-            val exif = ExifInterface(params.inputStream)
+            val image = BitmapFactory.decodeStream(params.uri.toFile().inputStream())
+            val exif = ExifInterface(params.uri.toFile().inputStream())
 
             val pictureOrientation =
-                exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+                exif.getAttributeInt(
+                    ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL
+                )
             val matrix = Matrix()
 
             when (pictureOrientation) {
@@ -42,10 +45,10 @@ class InputStreamToBitmap : UseCase<Bitmap, InputStreamToBitmap.Params>() {
 
             Right(
                 Bitmap.createBitmap(
-                    image, 0, 0, image.width, image.height, matrix, true)
+                    image, 0, 0, image.width, image.height, matrix, true
+                )
             )
         } catch (throwable: Throwable) {
             Left(Failure(throwable))
         }
-    }
 }
