@@ -28,7 +28,7 @@ class FindPaperSheetContours : InfallibleUseCase<Corners?, FindPaperSheetContour
         Imgproc.GaussianBlur(modified, modified, Size(51.0, 51.0), 0.0)
 
         // Canny Edge Detection
-        Imgproc.Canny(modified, modified, 100.0, 200.0, 5, false)
+        Imgproc.Canny(modified, modified, 500.0, 200.0, 5, false)
 
         // Closing: Dilation followed by Erosion
         Imgproc.dilate(
