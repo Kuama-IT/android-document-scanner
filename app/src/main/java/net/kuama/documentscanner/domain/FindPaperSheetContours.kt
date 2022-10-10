@@ -4,7 +4,7 @@ import android.graphics.Bitmap
 import net.kuama.documentscanner.data.Corners
 import net.kuama.documentscanner.data.CornersFactory
 import net.kuama.documentscanner.extensions.shape
-import net.kuama.documentscanner.support.*
+import net.kuama.documentscanner.support.InfallibleUseCase
 import org.opencv.android.Utils
 import org.opencv.core.Mat
 import org.opencv.core.MatOfPoint
@@ -25,32 +25,25 @@ class FindPaperSheetContours : InfallibleUseCase<Corners?, FindPaperSheetContour
         Imgproc.cvtColor(original, modified, Imgproc.COLOR_RGBA2GRAY)
 
         // Strong Gaussian Filter
-        Imgproc.GaussianBlur(modified, modified, Size(51.0, 51.0), 0.0)
+        Imgproc.GaussianBlur(modified, modified, Size(25.0, 25.0), 5.0)
 
         // Canny Edge Detection
-        Imgproc.Canny(modified, modified, 500.0, 200.0, 5, false)
+        Imgproc.Canny(modified, modified, 50.0, 200.0, 5, false)
 
         // Closing: Dilation followed by Erosion
         Imgproc.dilate(
-            modified, modified, Imgproc.getStructuringElement(
-                Imgproc.MORPH_RECT, Size(8.0, 8.0)
-            )
-        )
-        Imgproc.erode(
-            modified, modified, Imgproc.getStructuringElement(
-                Imgproc.MORPH_RECT, Size(3.0, 3.0)
-            )
+            modified, modified, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, Size(8.0, 8.0))
         )
 
         var contours: MutableList<MatOfPoint> = ArrayList()
         val hierarchy = Mat()
         Imgproc.findContours(
-            modified, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE
+            modified, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_NONE
         )
 
         hierarchy.release()
         contours = contours
-            .filter { it.shape.size == 4 }
+            .filter { point -> point.shape.size == 4 }
             .toTypedArray()
             .toMutableList()
 
@@ -58,10 +51,33 @@ class FindPaperSheetContours : InfallibleUseCase<Corners?, FindPaperSheetContour
             Imgproc.contourArea(rhs).compareTo(Imgproc.contourArea(lhs))
         }
 
-        val result: Corners? = contours.firstOrNull()?.let {
-            CornersFactory.create(it.shape, original.size())
+        var result: Corners? = null
+
+        contours.firstOrNull()?.let { contour ->
+
+            CornersFactory.create(contour.shape, original.size()).run {
+                with(this) {
+
+                    val topLine = topRight.x - topLeft.x
+                    val bottomLine = bottomRight.x - bottomLeft.x
+                    val leftLine = topLeft.y - bottomLeft.y
+                    val rightLine = topRight.y - bottomRight.y
+
+                    val isApproximateQuadrilateral =
+                        topLine > MIN_VALUE_HORIZONTAL_LINES && bottomLine > MIN_VALUE_HORIZONTAL_LINES
+                                && leftLine > MIN_VALUE_VERTICAL_LINES && rightLine > MIN_VALUE_VERTICAL_LINES
+
+                    result = if (isApproximateQuadrilateral) this else null
+
+                }
+            }
         }
 
         return result
+    }
+
+    private companion object {
+        private const val MIN_VALUE_VERTICAL_LINES = 130.0
+        private const val MIN_VALUE_HORIZONTAL_LINES = 320.0
     }
 }

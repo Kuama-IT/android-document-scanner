@@ -1,10 +1,18 @@
 package net.kuama.documentscanner.presentation
 
 import android.content.Context
-import android.graphics.*
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.CornerPathEffect
+import android.graphics.Paint
+import android.graphics.Path
+import android.os.Build.VERSION.SDK_INT
+import android.os.Build.VERSION_CODES.Q
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import android.widget.Magnifier
+import androidx.annotation.RequiresApi
 import net.kuama.documentscanner.data.Corners
 import org.opencv.core.Point
 import kotlin.math.abs
@@ -16,11 +24,8 @@ class PaperRectangle : View {
 
     constructor(context: Context, attributes: AttributeSet, defTheme: Int) : super(context, attributes, defTheme)
 
-    private val rectPaint = Paint()
-    private val extCirclePaint = Paint()
-    private val intCirclePaint = Paint()
-    private val intCirclePaintR = Paint()
-    private val extCirclePaintR = Paint()
+    private val pointPaint = Paint()
+    private val linePaint = Paint()
     private val fillPaint = Paint()
     private var ratioX: Double = 1.0
     private var ratioY: Double = 1.0
@@ -34,15 +39,17 @@ class PaperRectangle : View {
     private var latestDownX = 0.0F
     private var latestDownY = 0.0F
 
+    private var magnifier: Magnifier? = null
+
     init {
-        rectPaint.color = Color.parseColor("#3454D1")
-        rectPaint.isAntiAlias = true
-        rectPaint.isDither = true
-        rectPaint.strokeWidth = 6F
-        rectPaint.style = Paint.Style.STROKE
-        rectPaint.strokeJoin = Paint.Join.ROUND // set the join to round you want
-        rectPaint.strokeCap = Paint.Cap.ROUND // set the paint cap to round too
-        rectPaint.pathEffect = CornerPathEffect(10f)
+        pointPaint.color = Color.parseColor("#3454D1")
+        pointPaint.isAntiAlias = true
+        pointPaint.isDither = true
+        pointPaint.strokeWidth = 6F
+        pointPaint.style = Paint.Style.FILL
+        pointPaint.strokeJoin = Paint.Join.ROUND // set the join to round you want
+        pointPaint.strokeCap = Paint.Cap.ROUND // set the paint cap to round too
+        pointPaint.pathEffect = CornerPathEffect(10f)
 
         fillPaint.color = Color.parseColor("#3454D1")
         fillPaint.alpha = 60
@@ -54,29 +61,21 @@ class PaperRectangle : View {
         fillPaint.strokeCap = Paint.Cap.ROUND // set the paint cap to round too
         fillPaint.pathEffect = CornerPathEffect(10f)
 
-        extCirclePaint.color = Color.parseColor("#3454D1")
-        extCirclePaint.isDither = true
-        extCirclePaint.isAntiAlias = true
-        extCirclePaint.strokeWidth = 8F
-        extCirclePaint.style = Paint.Style.STROKE
+        linePaint.color = Color.parseColor("#3454D1")
+        linePaint.isAntiAlias = true
+        linePaint.isDither = true
+        linePaint.style = Paint.Style.STROKE
+        linePaint.strokeWidth = 4f
 
-        intCirclePaint.color = Color.DKGRAY
-        intCirclePaint.isDither = true
-        intCirclePaint.isAntiAlias = true
-        intCirclePaint.strokeWidth = 10F
-        intCirclePaint.style = Paint.Style.FILL
-
-        intCirclePaintR.color = Color.RED
-        intCirclePaintR.isDither = true
-        intCirclePaintR.isAntiAlias = true
-        intCirclePaintR.strokeWidth = 10F
-        intCirclePaintR.style = Paint.Style.FILL
-
-        extCirclePaintR.color = Color.RED
-        extCirclePaintR.isDither = true
-        extCirclePaintR.isAntiAlias = true
-        extCirclePaintR.strokeWidth = 8F
-        extCirclePaintR.style = Paint.Style.STROKE
+        if (SDK_INT >= Q) {
+            magnifier = Magnifier.Builder(this)
+                .apply {
+                    setSize(300, 300)
+                    setCornerRadius(150f)
+                    setInitialZoom(1.5f)
+                    setDefaultSourceToMagnifierOffset(0, - 300)
+                }.build()
+        }
     }
 
     fun onCorners(corners: Corners, width: Int, height: Int) {
@@ -121,19 +120,45 @@ class PaperRectangle : View {
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
+
         canvas?.drawPath(path, fillPaint)
-        canvas?.drawPath(path, rectPaint)
+        canvas?.drawPath(path, fillPaint)
 
         if (cropMode) {
-            canvas?.drawCircle(topLeft.x.toFloat(), topLeft.y.toFloat(), 40F, extCirclePaint)
-            canvas?.drawCircle(topRight.x.toFloat(), topRight.y.toFloat(), 40F, extCirclePaint)
-            canvas?.drawCircle(bottomLeft.x.toFloat(), bottomLeft.y.toFloat(), 40F, extCirclePaint)
-            canvas?.drawCircle(bottomRight.x.toFloat(), bottomRight.y.toFloat(), 40F, extCirclePaint)
 
-            canvas?.drawCircle(topLeft.x.toFloat(), topLeft.y.toFloat(), 35F, intCirclePaint)
-            canvas?.drawCircle(topRight.x.toFloat(), topRight.y.toFloat(), 35F, intCirclePaint)
-            canvas?.drawCircle(bottomLeft.x.toFloat(), bottomLeft.y.toFloat(), 35F, intCirclePaint)
-            canvas?.drawCircle(bottomRight.x.toFloat(), bottomRight.y.toFloat(), 35F, intCirclePaint)
+
+            canvas?.drawLine(
+                topLeft.x.toFloat(),
+                topLeft.y.toFloat(),
+                topRight.x.toFloat(),
+                topRight.y.toFloat(),
+                linePaint
+            )
+            canvas?.drawLine(
+                topLeft.x.toFloat(),
+                topLeft.y.toFloat(),
+                bottomLeft.x.toFloat(),
+                bottomLeft.y.toFloat(),
+                linePaint
+            )
+            canvas?.drawLine(
+                bottomLeft.x.toFloat(), bottomLeft.y.toFloat(),
+                bottomRight.x.toFloat(),
+                bottomRight.y.toFloat(),
+                linePaint
+            )
+            canvas?.drawLine(
+                bottomRight.x.toFloat(),
+                bottomRight.y.toFloat(),
+                topRight.x.toFloat(),
+                topRight.y.toFloat(),
+                linePaint
+            )
+
+            canvas?.drawCircle(topLeft.x.toFloat(), topLeft.y.toFloat(), 30F, pointPaint)
+            canvas?.drawCircle(topRight.x.toFloat(), topRight.y.toFloat(), 30F, pointPaint)
+            canvas?.drawCircle(bottomLeft.x.toFloat(), bottomLeft.y.toFloat(), 30F, pointPaint)
+            canvas?.drawCircle(bottomRight.x.toFloat(), bottomRight.y.toFloat(), 30F, pointPaint)
         }
     }
 
@@ -153,6 +178,12 @@ class PaperRectangle : View {
                 movePoints()
                 latestDownY = event.y
                 latestDownX = event.x
+
+                if (SDK_INT >= Q) magnifier?.show(event.rawX, event.rawY)
+
+            }
+            MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_UP -> {
+                if (SDK_INT >= Q) magnifier?.dismiss()
             }
         }
         return true

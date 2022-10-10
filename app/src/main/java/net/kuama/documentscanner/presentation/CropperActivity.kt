@@ -13,11 +13,17 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toUri
 import androidx.core.view.doOnNextLayout
 import net.kuama.documentscanner.R
+import net.kuama.documentscanner.data.Corners
 import net.kuama.documentscanner.databinding.ActivityCropperBinding
 import net.kuama.documentscanner.extensions.loadBitmapFromView
 import net.kuama.documentscanner.extensions.outputDirectory
+import net.kuama.documentscanner.extensions.percentOf
+import net.kuama.documentscanner.extensions.screenHeight
+import net.kuama.documentscanner.extensions.screenWidth
 import net.kuama.documentscanner.extensions.toByteArray
 import net.kuama.documentscanner.viewmodels.CropperModel
+import org.opencv.core.Point
+import org.opencv.core.Size
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -29,6 +35,13 @@ class CropperActivity : AppCompatActivity() {
     private lateinit var bitmapUri: Uri
     private var screenOrientationDeg: Int = 0
     private lateinit var binding: ActivityCropperBinding
+    private val defaultCorners = Corners(
+        topLeft = Point(screenWidth.percentOf(25), screenHeight.percentOf(25)),
+        topRight = Point(screenWidth.percentOf(80), screenHeight.percentOf(25)),
+        bottomRight = Point(screenWidth.percentOf(80), screenHeight.percentOf(70)),
+        bottomLeft = Point(screenWidth.percentOf(25), screenHeight.percentOf(70)),
+        size = Size(screenWidth.toDouble(), screenHeight.toDouble())
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -112,7 +125,7 @@ class CropperActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        cropModel.onViewCreated(bitmapUri, screenOrientationDeg)
+        cropModel.onViewCreated(bitmapUri, screenOrientationDeg, defaultCorners)
     }
 
     private fun closeActivity() {

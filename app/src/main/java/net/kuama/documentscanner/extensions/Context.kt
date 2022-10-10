@@ -1,6 +1,7 @@
 package net.kuama.documentscanner.extensions
 
 import android.content.Context
+import android.content.res.Resources
 import net.kuama.documentscanner.R
 import java.io.File
 
@@ -11,3 +12,7 @@ fun Context.outputDirectory(): File {
             mkdirs()
         }
 }
+
+val Context.screenWidth get() = Resources.getSystem().displayMetrics.widthPixels
+
+val Context.screenHeight get() = Resources.getSystem().displayMetrics.heightPixels
