@@ -36,6 +36,8 @@ abstract class BaseScannerActivity : AppCompatActivity() {
                 onDocumentAccepted(bitmap)
 
                 image.delete()
+
+                finish()
             } else {
                 viewModel.onViewCreated(OpenCVLoader(this), this, binding.viewFinder)
             }

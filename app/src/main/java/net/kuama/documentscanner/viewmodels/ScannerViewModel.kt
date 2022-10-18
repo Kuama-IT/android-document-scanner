@@ -81,9 +81,7 @@ class ScannerViewModel : ViewModel() {
                 EFlashStatus.ON -> EFlashStatus.OFF
                 EFlashStatus.OFF -> EFlashStatus.ON
             }
-        } ?: // default flash status is off
-        run {
-            // default flash status is off
+        } ?: run {
             // default flash status is off
             flashStatus.value = EFlashStatus.ON
         }

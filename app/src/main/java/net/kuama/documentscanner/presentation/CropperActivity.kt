@@ -60,10 +60,10 @@ class CropperActivity : AppCompatActivity() {
         // Picture taken from User
         cropModel.originalBitmap.observe(this) {
             binding.cropPreview.setImageBitmap(cropModel.originalBitmap.value)
-            binding.cropWrap.visibility = View.VISIBLE
+            binding.cropPreview.visibility = View.VISIBLE
 
             // Wait for bitmap to be loaded on view, then draw corners
-            binding.cropWrap.doOnNextLayout {
+            binding.cropPreview.doOnNextLayout {
                 binding.cropHud.onCorners(
                     corners = cropModel.corners.value ?: error("invalid Corners"),
                     height = binding.cropPreview.measuredHeight,
@@ -76,29 +76,20 @@ class CropperActivity : AppCompatActivity() {
             Toast.makeText(this, this.resources.getText(R.string.crop_error), Toast.LENGTH_SHORT).show()
         }
 
-        cropModel.bitmapToCrop.observe(this) {
-            binding.cropResultPreview.setImageBitmap(cropModel.bitmapToCrop.value)
-        }
-
-        binding.closeResultPreview.setOnClickListener {
-            closeActivity()
-        }
-
         binding.closeCropPreview.setOnClickListener {
             closeActivity()
         }
 
-        binding.confirmCropPreview.setOnClickListener {
-            binding.cropWrap.visibility = View.GONE
+        binding.rescan.setOnClickListener {
+            closeActivity()
+        }
+
+        binding.confirmCrop.setOnClickListener {
+            binding.cropPreview.visibility = View.GONE
             binding.cropHud.visibility = View.GONE
             val bitmapToCrop = loadBitmapFromView(binding.cropPreview)
 
             cropModel.onCornersAccepted(bitmapToCrop)
-
-            binding.cropResultWrap.visibility = View.VISIBLE
-        }
-
-        binding.confirmCropResult.setOnClickListener {
 
             val file = File(this.outputDirectory(), "${UUID.randomUUID()}.jpg")
 

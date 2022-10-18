@@ -1,97 +1,120 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    android:id="@+id/crop_root_view"
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/crop_root_view"
     android:layout_width="match_parent"
-    android:background="@color/black"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/black">
 
+    <com.github.chrisbanes.photoview.PhotoView
+        android:id="@+id/cropPreview"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintBottom_toTopOf="@id/descriptionContainer"
+        app:layout_constraintTop_toBottomOf="@id/closeCropPreview" />
+
+    <ImageButton
+        android:id="@+id/closeCropPreview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:background="@null"
+        android:contentDescription="@string/close_document_preview"
+        android:src="@drawable/ic_close_24"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/cropWrap"
+        android:id="@+id/descriptionContainer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="126dp"
         android:background="@color/black"
-        android:visibility="gone">
+        app:layout_constraintBottom_toBottomOf="parent">
 
-        <com.github.chrisbanes.photoview.PhotoView
-            android:id="@+id/cropPreview"
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/descriptionFirst"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:layout_constraintTop_toBottomOf="@id/closeCropPreview" />
-
-        <ImageButton
-            android:id="@+id/closeCropPreview"
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_marginEnd="16dp"
-            android:background="@null"
-            android:contentDescription="@string/close_document_preview"
-            android:src="@drawable/ic_close_24"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_margin="16dp"
+            android:fontFamily="@font/sf_pro_display_regular"
+            android:text="@string/crop_description_title_first"
+            android:textColor="#858585"
+            android:textSize="14sp"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <ImageButton
-            android:id="@+id/confirmCropPreview"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:layout_margin="0dp"
-            android:background="@color/white"
-            android:contentDescription="@string/confirm_document"
-            android:padding="0dp"
-            android:src="@drawable/ic_check_24"
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/descriptionSecond"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:fontFamily="@font/sf_pro_display_regular"
+            android:text="@string/crop_description_title_second"
+            android:textColor="#858585"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/descriptionFirst" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:layout_marginTop="4dp"
+            app:layout_constraintStart_toEndOf="@id/descriptionSecond"
+            app:layout_constraintTop_toBottomOf="@id/descriptionFirst"
+            app:srcCompat="@drawable/ic_description_scanner"
+            app:tint="#858585" />
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/confirmCrop"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            app:cardBackgroundColor="#0D5FCB"
+            app:cardCornerRadius="8dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/descriptionSecond"
+            app:layout_constraintWidth_percent="0.5">
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/cropResultWrap"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@color/black"
-            android:visibility="gone">
-
-        <com.github.chrisbanes.photoview.PhotoView
-                android:id="@+id/cropResultPreview"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                app:layout_constraintTop_toBottomOf="@id/closeResultPreview" />
-
-        <ImageButton
-                android:id="@+id/closeResultPreview"
+            <androidx.appcompat.widget.AppCompatTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:layout_marginEnd="16dp"
-                android:background="@null"
-                android:contentDescription="@string/close_document_preview"
-                android:src="@drawable/ic_close_24"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                android:layout_gravity="center"
+                android:layout_marginVertical="12dp"
+                android:fontFamily="@font/sf_pro_display_medium"
+                android:text="@string/crop_description_take_scan"
+                android:textColor="@color/white"
+                android:textSize="12sp" />
 
-        <ImageButton
-                android:id="@+id/confirmCropResult"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:layout_margin="0dp"
-                android:background="@color/white"
-                android:contentDescription="@string/confirm_document"
-                android:padding="0dp"
-                android:src="@drawable/ic_check_24"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
+        </androidx.cardview.widget.CardView>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/rescan"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="@font/sf_pro_display_medium"
+            android:text="@string/crop_description_rescan"
+            android:textColor="@color/white"
+            android:textSize="12sp"
+            app:layout_constraintBottom_toBottomOf="@id/confirmCrop"
+            app:layout_constraintEnd_toStartOf="@id/confirmCrop"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@id/confirmCrop" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <net.kuama.documentscanner.presentation.PaperRectangle
         android:id="@+id/cropHud"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
         android:background="#00000000"
-        android:paddingStart="0dp"
-        android:paddingBottom="0dp" />
+        app:layout_constraintBottom_toTopOf="@id/descriptionContainer"
+        app:layout_constraintTop_toBottomOf="@id/closeCropPreview" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

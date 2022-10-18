@@ -1,18 +1,13 @@
 <resources>
-    <string name="app_name">Scanner</string>
-    <string name="toggle_flash">Toggle flash</string>
-    <string name="null_corners">No document found</string>
-    <string name="confirm_document">Confirm document</string>
-    <string name="close_document_preview">Close document preview</string>
-    <string name="take_picture">Take picture</string>
-    <string name="title_activity_main">MainActivity</string>
-    <string name="crop_error">Error while cropping the document</string>
-    <!-- Strings used for fragments for navigation -->
-    <string name="first_fragment_label">First Fragment</string>
-    <string name="second_fragment_label">Second Fragment</string>
-    <string name="next">Next</string>
-    <string name="previous">Previous</string>
-
-    <string name="hello_first_fragment">Hello first fragment</string>
-    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <string name="app_name">DocumentScanner</string>
+    <string name="toggle_flash">Переключить всыпшку</string>
+    <string name="null_corners">Документ не найден</string>
+    <string name="confirm_document">Подтвердить документ</string>
+    <string name="close_document_preview">Закрыть предварительный просмотр документа</string>
+    <string name="take_picture">Сделайте снимок</string>
+    <string name="crop_error">Ошибка при обрезке документа</string>
+    <string name="crop_description_title_first">Перетащите маркеры для корректировки</string>
+    <string name="crop_description_title_second">точных границ документа</string>
+    <string name="crop_description_take_scan">Отправить скан</string>
+    <string name="crop_description_rescan">Переснять</string>
 </resources>
